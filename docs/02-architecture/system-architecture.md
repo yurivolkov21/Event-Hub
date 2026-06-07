@@ -62,7 +62,7 @@ Responsibilities:
 ## Auth Model
 
 - User signs in with email and password.
-- Backend verifies password with bcrypt.
+- Backend verifies password with bcrypt-compatible hashing.
 - Backend returns JWT.
 - Flutter stores JWT securely.
 - Protected API calls send `Authorization: Bearer <token>`.
@@ -98,7 +98,7 @@ Responsibilities:
 
 ## Security Notes
 
-- Hash passwords with bcrypt.
+- Hash passwords with bcrypt-compatible hashing.
 - Never store raw passwords.
 - Keep JWT secret in environment variables.
 - Keep Firebase service account outside Git.

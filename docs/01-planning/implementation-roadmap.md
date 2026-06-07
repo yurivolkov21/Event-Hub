@@ -40,7 +40,7 @@ Deliverables:
 - JWT generation
 - Auth middleware
 - Current user API
-- Password hashing with bcrypt
+- Password hashing with bcrypt-compatible hashing
 - Flutter sign in and sign up screens connected to API
 
 ## Step 04 - Events CRUD

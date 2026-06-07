@@ -50,8 +50,8 @@ server/
 Install with pnpm:
 
 ```bash
-pnpm add express mongoose dotenv cors helmet morgan bcrypt jsonwebtoken multer firebase-admin zod
-pnpm add -D typescript ts-node-dev @types/express @types/cors @types/bcrypt @types/jsonwebtoken @types/multer @types/morgan
+pnpm add express mongoose dotenv cors helmet morgan bcryptjs jsonwebtoken multer firebase-admin zod
+pnpm add -D typescript ts-node-dev @types/express @types/cors @types/jsonwebtoken @types/multer @types/morgan
 ```
 
 ## Scripts

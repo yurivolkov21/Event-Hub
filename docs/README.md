@@ -10,7 +10,7 @@ This folder stores the planning notes, architecture decisions, and step-by-step 
 - Backend: Node.js, Express, TypeScript
 - Package manager: pnpm
 - Database: MongoDB with Mongoose
-- Authentication: JWT with bcrypt password hashing
+- Authentication: JWT with bcrypt-compatible password hashing via bcryptjs
 - Image storage: Firebase Storage through Firebase Admin SDK
 - Push notification: Firebase Cloud Messaging through Firebase Admin SDK
 

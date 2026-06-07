@@ -52,7 +52,7 @@ Done when:
 - User model exists.
 - Register API works.
 - Login API works.
-- Password is hashed with bcrypt.
+- Password is hashed with bcrypt-compatible hashing.
 - JWT is returned on login.
 - Protected route middleware works.
 - Flutter can register, login, store token, and call `/api/auth/me`.
