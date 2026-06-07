@@ -4,10 +4,14 @@
 *.pyc
 *.swp
 .DS_Store
+.env
+.env.*
+!.env.example
 .atom/
 .build/
 .buildlog/
 .history
+.remember/
 .svn/
 .swiftpm/
 migrate_working_dir/
@@ -17,11 +21,6 @@ migrate_working_dir/
 *.ipr
 *.iws
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
@@ -43,3 +42,32 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Node.js / Express backend
+node_modules/
+server/node_modules/
+dist/
+server/dist/
+coverage/
+server/coverage/
+*.tsbuildinfo
+
+# pnpm
+.pnpm-store/
+
+# Runtime logs
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Firebase / Google service credentials
+firebase-service-account*.json
+serviceAccountKey.json
+server/serviceAccountKey.json
+server/firebase-service-account*.json
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+
+# Local editor state
+.vscode/
