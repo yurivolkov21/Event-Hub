@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { env } from './config/env';
 import { errorHandler, notFoundHandler } from './middlewares/error.middleware';
 import { authRouter } from './modules/auth/auth.routes';
+import { eventRouter } from './modules/events/event.routes';
 import { healthRouter } from './routes/health.routes';
 
 export const createApp = (): Express => {
@@ -24,6 +25,7 @@ export const createApp = (): Express => {
   app.use('/health', healthRouter);
   app.use('/api/health', healthRouter);
   app.use('/api/auth', authRouter);
+  app.use('/api/events', eventRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);
