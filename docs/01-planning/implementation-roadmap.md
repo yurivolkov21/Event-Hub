@@ -8,6 +8,7 @@ Deliverables:
 
 - Clean Flutter starter structure
 - Create `server/` folder
+- Add `server/.env.example`
 - Initialize pnpm backend project
 - Configure TypeScript
 - Configure environment files
@@ -110,6 +111,7 @@ Deliverables:
 - At least one backend test or Flutter unit test
 - APK build
 - Final README with demo accounts and API URL
+- Demo and grading checklist completed
 
 ## Suggested Order
 

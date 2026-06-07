@@ -28,10 +28,14 @@ Prepare the project structure for Flutter app work and backend server work.
 - Created Flutter plan under `docs/03-flutter-app/`
 - Created backend plan under `docs/04-backend-server/`
 - Created progress folders under `docs/05-progress/`
+- Created `server/.env.example`
+- Updated `.gitignore` for Node.js, pnpm, env files, Firebase credentials, `.remember/`, and `.vscode/`
 
 ## Verification
 
 - Confirmed `docs/` contains 18 markdown files.
+- Added planning docs for Definition of Done, demo checklist, design reference, and scope control.
+- Added architecture docs for environment/secrets, API error convention, and seed data.
 
 ## Notes
 
