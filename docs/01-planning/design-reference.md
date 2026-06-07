@@ -3,24 +3,24 @@
 The current Figma export folder is:
 
 ```text
-Event Booking App- EventHub/
+docs/Event Booking App- EventHub/
 ```
 
 This folder is used as the visual reference for the Flutter UI.
 
 ## Current Decision
 
-Keep the design folder in the project root for now.
+Keep the design folder under `docs/`.
 
 Reason:
 
-- The folder is already staged in Git.
-- Moving many image files before coding can make the first commit harder to review.
+- Design assets are documentation/reference files.
+- Keeping them under `docs/` makes the root project folder cleaner.
 - The folder name clearly identifies the design source.
 
 ## Optional Future Cleanup
 
-If we want a cleaner documentation layout later, move it to:
+If we want a more structured documentation layout later, rename or move it to:
 
 ```text
 docs/design/eventhub-figma/

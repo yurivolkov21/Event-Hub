@@ -2,7 +2,7 @@
 
 ## Figma Screens Found
 
-The folder `Event Booking App- EventHub/` contains these design screens:
+The folder `docs/Event Booking App- EventHub/` contains these design screens:
 
 - Splash Screen
 - Onboarding 1

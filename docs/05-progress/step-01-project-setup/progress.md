@@ -30,6 +30,7 @@ Prepare the project structure for Flutter app work and backend server work.
 - Created progress folders under `docs/05-progress/`
 - Created `server/.env.example`
 - Updated `.gitignore` for Node.js, pnpm, env files, Firebase credentials, `.remember/`, and `.vscode/`
+- Design assets are now stored under `docs/Event Booking App- EventHub/`
 
 ## Verification
 
