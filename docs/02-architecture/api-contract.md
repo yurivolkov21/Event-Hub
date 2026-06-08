@@ -91,6 +91,12 @@ sort
 
 Create event body can be JSON or multipart form data if uploading image.
 
+Multipart image field name:
+
+```text
+image
+```
+
 ```json
 {
   "title": "International Band Music Concert",

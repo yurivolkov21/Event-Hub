@@ -154,6 +154,10 @@ export const updateEvent = async (
       : event.categoryId,
   });
 
+  if (event.endAt <= event.startAt) {
+    throw new AppError('End date must be after start date', 400);
+  }
+
   await event.save();
 
   return toPublicEvent(event);

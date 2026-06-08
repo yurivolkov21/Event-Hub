@@ -5,6 +5,7 @@ import {
   authMiddleware,
   requireRole,
 } from '../../middlewares/auth.middleware';
+import { uploadEventImage } from '../../middlewares/upload.middleware';
 import * as eventController from './event.controller';
 
 export const eventRouter: ExpressRouter = Router();
@@ -15,12 +16,14 @@ eventRouter.post(
   '/',
   authMiddleware,
   requireRole('organizer', 'admin'),
+  uploadEventImage,
   eventController.createEvent,
 );
 eventRouter.put(
   '/:id',
   authMiddleware,
   requireRole('organizer', 'admin'),
+  uploadEventImage,
   eventController.updateEvent,
 );
 eventRouter.delete(

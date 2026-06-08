@@ -8,6 +8,24 @@ import {
   updateEventSchema,
 } from './event.schemas';
 import * as eventService from './event.service';
+import { uploadImageToFirebaseStorage } from '../images/image-storage.service';
+
+const imageUrlValidationPlaceholder =
+  'https://eventhub.local/upload-placeholder.jpg';
+
+const buildBodyWithOptionalUploadedImage = (
+  body: unknown,
+  file: Express.Multer.File | undefined,
+) => {
+  if (!file) {
+    return body;
+  }
+
+  return {
+    ...(typeof body === 'object' && body !== null ? body : {}),
+    imageUrl: imageUrlValidationPlaceholder,
+  };
+};
 
 export const listEvents: RequestHandler = async (req, res, next) => {
   try {
@@ -37,7 +55,14 @@ export const createEvent: RequestHandler = async (req, res, next) => {
       throw new AppError('Authentication token is required', 401);
     }
 
-    const input = createEventSchema.parse(req.body);
+    const input = createEventSchema.parse(
+      buildBodyWithOptionalUploadedImage(req.body, req.file),
+    );
+
+    if (req.file) {
+      input.imageUrl = await uploadImageToFirebaseStorage(req.file);
+    }
+
     const event = await eventService.createEvent(req.user.id, input);
 
     res.status(201).json({ event });
@@ -53,7 +78,14 @@ export const updateEvent: RequestHandler = async (req, res, next) => {
     }
 
     const { id } = eventIdParamSchema.parse(req.params);
-    const input = updateEventSchema.parse(req.body);
+    const input = updateEventSchema.parse(
+      buildBodyWithOptionalUploadedImage(req.body, req.file),
+    );
+
+    if (req.file) {
+      input.imageUrl = await uploadImageToFirebaseStorage(req.file);
+    }
+
     const event = await eventService.updateEvent(id, input, req.user);
 
     res.json({ event });
