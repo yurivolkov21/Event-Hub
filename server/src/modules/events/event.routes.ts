@@ -7,11 +7,17 @@ import {
 } from '../../middlewares/auth.middleware';
 import { uploadEventImage } from '../../middlewares/upload.middleware';
 import * as eventController from './event.controller';
+import * as invitationController from '../invitations/invitation.controller';
 
 export const eventRouter: ExpressRouter = Router();
 
 eventRouter.get('/', eventController.listEvents);
 eventRouter.get('/:id', eventController.getEventById);
+eventRouter.post(
+  '/:eventId/invitations',
+  authMiddleware,
+  invitationController.createInvitations,
+);
 eventRouter.post(
   '/',
   authMiddleware,

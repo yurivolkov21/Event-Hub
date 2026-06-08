@@ -144,6 +144,8 @@ GET  /api/notifications
 PUT  /api/notifications/:id/read
 ```
 
+`POST /api/notifications/register-token` is planned for FCM in Step 07. Step 06 implements notification history list/read.
+
 Register FCM token body:
 
 ```json
@@ -157,6 +159,7 @@ Register FCM token body:
 
 ```text
 POST /api/events/:eventId/invitations
+GET  /api/invitations/me
 PUT  /api/invitations/:id/accept
 PUT  /api/invitations/:id/reject
 ```
