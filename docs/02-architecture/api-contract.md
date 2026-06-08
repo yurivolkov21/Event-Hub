@@ -144,14 +144,15 @@ GET  /api/notifications
 PUT  /api/notifications/:id/read
 ```
 
-`POST /api/notifications/register-token` is planned for FCM in Step 07. Step 06 implements notification history list/read.
+`POST /api/notifications/register-token` stores the current device token for FCM. Notification history list/read is available through the same module.
 
 Register FCM token body:
 
 ```json
 {
   "token": "fcm-token",
-  "platform": "android"
+  "platform": "android",
+  "appVersion": "1.0.0"
 }
 ```
 

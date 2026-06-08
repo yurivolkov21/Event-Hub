@@ -50,6 +50,7 @@ Indexes:
   categoryId: ObjectId,
   organizerId: ObjectId,
   imageUrl?: string,
+  imagePublicId?: string,
   startAt: Date,
   endAt: Date,
   venueName: string,
@@ -138,8 +139,10 @@ Rules:
   _id: ObjectId,
   userId: ObjectId,
   token: string,
-  platform: "android",
-  lastUsedAt: Date,
+  platform: "android" | "ios" | "web",
+  appVersion?: string,
+  lastSeenAt: Date,
+  disabledAt?: Date,
   createdAt: Date,
   updatedAt: Date
 }
@@ -149,6 +152,7 @@ Indexes:
 
 - unique `token`
 - index on `userId`
+- compound index on `userId` and `disabledAt`
 
 ## Notification
 

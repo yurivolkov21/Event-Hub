@@ -10,6 +10,7 @@ import {
   toPublicNotification,
   type PublicNotification,
 } from './notification.dto';
+import * as fcmTokenService from './fcm-token.service';
 import type { ListNotificationsQuery } from './notification.schemas';
 
 interface CreateNotificationInput {
@@ -40,6 +41,18 @@ export const createNotification = async (
     body: input.body,
     data: input.data ?? {},
   });
+
+  await fcmTokenService
+    .sendPushToUser(input.userId, {
+      title: input.title,
+      body: input.body,
+      data: {
+        ...(input.data ?? {}),
+        notificationId: notification._id.toString(),
+        type: input.type,
+      },
+    })
+    .catch(() => undefined);
 
   return toPublicNotification(notification as NotificationDocument);
 };

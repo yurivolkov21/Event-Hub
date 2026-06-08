@@ -60,11 +60,11 @@ Deliverables:
 
 ## Step 05 - Image Storage
 
-Goal: upload event images from Android to Firebase Storage.
+Goal: upload event images from Android to Cloudinary.
 
 Deliverables:
 
-- Firebase Admin setup
+- Cloudinary backend setup
 - Multer upload middleware
 - Upload image API
 - Save image URL in MongoDB

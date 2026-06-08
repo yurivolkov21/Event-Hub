@@ -46,7 +46,7 @@ The current Flutter project is still a starter template. The Figma folder contai
    - View owned events
    - Update event
    - Delete event
-   - Upload event image to Firebase Storage
+   - Upload event image to Cloudinary
 
 6. Notification
    - Register FCM token after login

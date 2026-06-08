@@ -5,7 +5,7 @@ import {
   initializeApp,
   type App,
 } from 'firebase-admin/app';
-import { getStorage } from 'firebase-admin/storage';
+import { getMessaging } from 'firebase-admin/messaging';
 
 import { env } from './env';
 import { AppError } from '../middlewares/error.middleware';
@@ -14,7 +14,6 @@ const placeholderValues = new Set([
   'your-project-id',
   'firebase-adminsdk@example.iam.gserviceaccount.com',
   '-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n',
-  'your-project-id.appspot.com',
 ]);
 
 const normalizePrivateKey = (privateKey: string): string => {
@@ -25,29 +24,26 @@ const isUsableValue = (value: string | undefined): value is string => {
   return Boolean(value && !placeholderValues.has(normalizePrivateKey(value)));
 };
 
-export const isFirebaseStorageConfigured = (): boolean => {
+export const isFirebaseAdminConfigured = (): boolean => {
   return (
     isUsableValue(env.FIREBASE_PROJECT_ID) &&
     isUsableValue(env.FIREBASE_CLIENT_EMAIL) &&
-    isUsableValue(env.FIREBASE_PRIVATE_KEY) &&
-    isUsableValue(env.FIREBASE_STORAGE_BUCKET)
+    isUsableValue(env.FIREBASE_PRIVATE_KEY)
   );
 };
 
-const getFirebaseApp = (): App => {
+export const getFirebaseApp = (): App => {
   const projectId = env.FIREBASE_PROJECT_ID;
   const clientEmail = env.FIREBASE_CLIENT_EMAIL;
   const privateKey = env.FIREBASE_PRIVATE_KEY;
-  const storageBucket = env.FIREBASE_STORAGE_BUCKET;
 
   if (
-    !isFirebaseStorageConfigured() ||
+    !isFirebaseAdminConfigured() ||
     !projectId ||
     !clientEmail ||
-    !privateKey ||
-    !storageBucket
+    !privateKey
   ) {
-    throw new AppError('Firebase Storage is not configured', 500);
+    throw new AppError('Firebase Admin is not configured', 500);
   }
 
   if (getApps().length > 0) {
@@ -60,12 +56,9 @@ const getFirebaseApp = (): App => {
       clientEmail,
       privateKey: normalizePrivateKey(privateKey),
     }),
-    storageBucket,
   });
 };
 
-export const getFirebaseStorageBucket = () => {
-  const app = getFirebaseApp();
-
-  return getStorage(app).bucket();
+export const getFirebaseMessaging = () => {
+  return getMessaging(getFirebaseApp());
 };

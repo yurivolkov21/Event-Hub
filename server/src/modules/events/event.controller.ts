@@ -8,7 +8,7 @@ import {
   updateEventSchema,
 } from './event.schemas';
 import * as eventService from './event.service';
-import { uploadImageToFirebaseStorage } from '../images/image-storage.service';
+import { uploadImageToCloudinary } from '../images/image-storage.service';
 
 const imageUrlValidationPlaceholder =
   'https://eventhub.local/upload-placeholder.jpg';
@@ -60,7 +60,16 @@ export const createEvent: RequestHandler = async (req, res, next) => {
     );
 
     if (req.file) {
-      input.imageUrl = await uploadImageToFirebaseStorage(req.file);
+      const uploadedImage = await uploadImageToCloudinary(req.file);
+      input.imageUrl = uploadedImage.imageUrl;
+
+      const event = await eventService.createEvent(req.user.id, {
+        ...input,
+        imagePublicId: uploadedImage.imagePublicId,
+      });
+
+      res.status(201).json({ event });
+      return;
     }
 
     const event = await eventService.createEvent(req.user.id, input);
@@ -83,7 +92,20 @@ export const updateEvent: RequestHandler = async (req, res, next) => {
     );
 
     if (req.file) {
-      input.imageUrl = await uploadImageToFirebaseStorage(req.file);
+      const uploadedImage = await uploadImageToCloudinary(req.file);
+      input.imageUrl = uploadedImage.imageUrl;
+
+      const event = await eventService.updateEvent(
+        id,
+        {
+          ...input,
+          imagePublicId: uploadedImage.imagePublicId,
+        },
+        req.user,
+      );
+
+      res.json({ event });
+      return;
     }
 
     const event = await eventService.updateEvent(id, input, req.user);

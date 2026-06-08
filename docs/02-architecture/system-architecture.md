@@ -9,7 +9,7 @@ Flutter Android app
   -> REST API over HTTPS
 Node.js Express TypeScript backend
   -> MongoDB with Mongoose
-  -> Firebase Storage for images
+  -> Cloudinary for images
   -> Firebase Cloud Messaging for push notifications
 ```
 
@@ -36,7 +36,7 @@ Responsibilities:
 - Enforce authorization
 - Provide REST APIs
 - Store and query MongoDB data
-- Upload images to Firebase Storage
+- Upload images to Cloudinary
 - Send FCM notifications
 
 ### MongoDB
@@ -52,12 +52,19 @@ Responsibilities:
 - Store notification history
 - Store device FCM tokens
 
+### Cloudinary
+
+Responsibilities:
+
+- Stores uploaded event and profile images
+- Provides CDN image URLs and public ids for cleanup
+
 ### Firebase
 
 Responsibilities:
 
-- Firebase Storage stores uploaded event and profile images
 - FCM sends push notifications to Android devices
+- Firebase Admin SDK lets the backend send push messages
 
 ## Auth Model
 
@@ -80,8 +87,8 @@ Responsibilities:
 2. User selects an image from device.
 3. Flutter submits multipart form data to backend.
 4. Backend validates user role.
-5. Backend uploads image to Firebase Storage.
-6. Backend creates event in MongoDB with image URL.
+5. Backend uploads image to Cloudinary.
+6. Backend creates event in MongoDB with image URL and Cloudinary public id.
 7. Backend returns created event.
 8. Flutter refreshes event list.
 

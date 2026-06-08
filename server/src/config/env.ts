@@ -14,11 +14,14 @@ const envSchema = z.object({
   FIREBASE_PROJECT_ID: z.string().optional(),
   FIREBASE_CLIENT_EMAIL: z.string().optional(),
   FIREBASE_PRIVATE_KEY: z.string().optional(),
-  FIREBASE_STORAGE_BUCKET: z.string().optional(),
   FCM_DRY_RUN: z
     .enum(['true', 'false'])
     .default('false')
     .transform((value) => value === 'true'),
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
+  CLOUDINARY_FOLDER: z.string().default('eventhub/events'),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

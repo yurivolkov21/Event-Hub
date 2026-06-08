@@ -6,6 +6,11 @@ import * as notificationController from './notification.controller';
 
 export const notificationRouter: ExpressRouter = Router();
 
+notificationRouter.post(
+  '/register-token',
+  authMiddleware,
+  notificationController.registerFcmToken,
+);
 notificationRouter.get(
   '/',
   authMiddleware,

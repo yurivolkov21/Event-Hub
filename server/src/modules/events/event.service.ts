@@ -1,6 +1,7 @@
 import { Types } from 'mongoose';
 
 import { AppError } from '../../middlewares/error.middleware';
+import { deleteImageFromCloudinary } from '../images/image-storage.service';
 import { toPublicEvent, type PublicEvent } from './event.dto';
 import { EventModel, type EventDocument } from './event.model';
 import type {
@@ -13,6 +14,14 @@ interface CurrentUser {
   id: string;
   role: Express.User['role'];
 }
+
+interface EventImageFields {
+  imageUrl?: string | null;
+  imagePublicId?: string | null;
+}
+
+type CreateEventPayload = CreateEventInput & EventImageFields;
+type UpdateEventPayload = UpdateEventInput & EventImageFields;
 
 interface PaginatedEvents {
   data: PublicEvent[];
@@ -85,6 +94,20 @@ const assertCanManageEvent = (event: EventDocument, user: CurrentUser) => {
   }
 };
 
+const deleteEventImageIfPresent = async (
+  publicId: string | null | undefined,
+): Promise<void> => {
+  if (!publicId) {
+    return;
+  }
+
+  try {
+    await deleteImageFromCloudinary(publicId);
+  } catch {
+    // Event CRUD should remain available even if external image cleanup fails.
+  }
+};
+
 export const listEvents = async (
   query: ListEventsQuery,
 ): Promise<PaginatedEvents> => {
@@ -122,7 +145,7 @@ export const getEventById = async (eventId: string): Promise<PublicEvent> => {
 
 export const createEvent = async (
   organizerId: string,
-  input: CreateEventInput,
+  input: CreateEventPayload,
 ): Promise<PublicEvent> => {
   const event = await EventModel.create({
     ...input,
@@ -136,7 +159,7 @@ export const createEvent = async (
 
 export const updateEvent = async (
   eventId: string,
-  input: UpdateEventInput,
+  input: UpdateEventPayload,
   user: CurrentUser,
 ): Promise<PublicEvent> => {
   const event = (await EventModel.findById(eventId)) as EventDocument | null;
@@ -146,6 +169,8 @@ export const updateEvent = async (
   }
 
   assertCanManageEvent(event, user);
+
+  const previousImagePublicId = event.imagePublicId;
 
   event.set({
     ...input,
@@ -159,6 +184,14 @@ export const updateEvent = async (
   }
 
   await event.save();
+
+  if (
+    input.imagePublicId &&
+    previousImagePublicId &&
+    previousImagePublicId !== input.imagePublicId
+  ) {
+    await deleteEventImageIfPresent(previousImagePublicId);
+  }
 
   return toPublicEvent(event);
 };
@@ -175,5 +208,8 @@ export const deleteEvent = async (
 
   assertCanManageEvent(event, user);
 
+  const imagePublicId = event.imagePublicId;
+
   await event.deleteOne();
+  await deleteEventImageIfPresent(imagePublicId);
 };

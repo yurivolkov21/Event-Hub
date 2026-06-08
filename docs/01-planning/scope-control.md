@@ -11,7 +11,7 @@ These items are required for the course project:
 - Flutter Android app
 - Authentication with JWT
 - Event CRUD from Android app
-- Image upload to Firebase Storage
+- Image upload to Cloudinary
 - Push notification with FCM
 
 ## Should Have

@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { fcmTokenPlatforms } from './fcm-token.model';
+
 const objectIdSchema = z
   .string()
   .regex(/^[a-f\d]{24}$/i, 'Invalid ObjectId');
@@ -17,6 +19,17 @@ export const listNotificationsQuerySchema = z.object({
     .transform((value) => value === 'true'),
 });
 
+export const registerFcmTokenSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(20, 'FCM token is too short')
+    .max(4096, 'FCM token is too long'),
+  platform: z.enum(fcmTokenPlatforms).default('android'),
+  appVersion: z.string().trim().max(80).optional().nullable(),
+});
+
 export type ListNotificationsQuery = z.infer<
   typeof listNotificationsQuerySchema
 >;
+export type RegisterFcmTokenInput = z.infer<typeof registerFcmTokenSchema>;

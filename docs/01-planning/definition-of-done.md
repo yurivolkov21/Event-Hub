@@ -89,9 +89,9 @@ Verification:
 
 Done when:
 
-- Firebase Admin SDK is configured.
+- Cloudinary credentials are configured.
 - Backend accepts multipart image upload.
-- Image uploads to Firebase Storage.
+- Image uploads to Cloudinary.
 - Public or signed image URL is saved in MongoDB.
 - Flutter can pick an image and upload it with event data.
 - Event cards and detail page show uploaded image.
@@ -99,7 +99,7 @@ Done when:
 Verification:
 
 - Upload test image.
-- Confirm file appears in Firebase Storage.
+- Confirm file appears in Cloudinary Media Library.
 - Confirm event document has image URL.
 - Confirm Flutter renders image from URL.
 

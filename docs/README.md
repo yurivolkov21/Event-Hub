@@ -11,7 +11,7 @@ This folder stores the planning notes, architecture decisions, and step-by-step 
 - Package manager: pnpm
 - Database: MongoDB with Mongoose
 - Authentication: JWT with bcrypt-compatible password hashing via bcryptjs
-- Image storage: Firebase Storage through Firebase Admin SDK
+- Image storage: Cloudinary
 - Push notification: Firebase Cloud Messaging through Firebase Admin SDK
 
 ## Docs Map

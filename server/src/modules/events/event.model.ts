@@ -40,6 +40,10 @@ const eventSchema = new Schema(
       type: String,
       default: null,
     },
+    imagePublicId: {
+      type: String,
+      default: null,
+    },
     startAt: {
       type: Date,
       required: true,

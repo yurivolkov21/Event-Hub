@@ -2,7 +2,15 @@
 
 ## Current State
 
-The app currently contains the default Flutter starter code in `lib/main.dart`. The first Flutter implementation step should replace the counter app with an EventHub app shell.
+The app now contains a minimal EventHub app shell in `lib/main.dart`.
+
+Implemented Flutter foundation:
+
+- Firebase initializes before `runApp`.
+- Firebase Messaging background handler is registered.
+- FCM permission request and token retrieval are scaffolded.
+- `FcmNotificationService.registerCurrentToken(authToken)` can be called after login.
+- API base URL can be overridden with `--dart-define=API_BASE_URL=...`.
 
 ## Suggested Folder Structure
 
@@ -48,7 +56,7 @@ image_picker
 cached_network_image
 firebase_core
 firebase_messaging
-firebase_storage
+http
 intl
 ```
 
@@ -131,11 +139,11 @@ Create a reusable HTTP client that:
 
 Flutter should:
 
-- Initialize Firebase
-- Request notification permission
-- Get FCM token
-- Send token to backend after login
-- Listen for foreground messages
+- Initialize Firebase: implemented
+- Request notification permission: implemented
+- Get FCM token: implemented
+- Send token to backend after login: service method implemented, auth flow call pending
+- Listen for foreground messages: scaffolded
 - Open related screen when user taps notification
 
 ## UI Notes From Figma

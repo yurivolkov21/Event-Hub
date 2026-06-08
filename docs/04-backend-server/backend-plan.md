@@ -9,6 +9,7 @@
 - MongoDB
 - Mongoose
 - Firebase Admin SDK
+- Cloudinary
 
 ## Suggested Folder Structure
 
@@ -50,7 +51,7 @@ server/
 Install with pnpm:
 
 ```bash
-pnpm add express mongoose dotenv cors helmet morgan bcryptjs jsonwebtoken multer firebase-admin zod
+pnpm add express mongoose dotenv cors helmet morgan bcryptjs jsonwebtoken multer firebase-admin cloudinary zod
 pnpm add -D typescript ts-node-dev @types/express @types/cors @types/jsonwebtoken @types/multer @types/morgan
 ```
 
@@ -76,7 +77,11 @@ JWT_EXPIRES_IN=7d
 FIREBASE_PROJECT_ID=...
 FIREBASE_CLIENT_EMAIL=...
 FIREBASE_PRIVATE_KEY=...
-FIREBASE_STORAGE_BUCKET=...
+FCM_DRY_RUN=false
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+CLOUDINARY_FOLDER=eventhub/events
 ```
 
 ## Middleware
@@ -97,15 +102,15 @@ FIREBASE_STORAGE_BUCKET=...
 7. Notifications and FCM
 8. Reviews and invitations
 
-## Firebase Storage Approach
+## Cloudinary Image Storage Approach
 
 Preferred flow:
 
 1. Flutter sends image as multipart form data.
 2. Express receives file through Multer memory storage.
-3. Backend uploads file buffer to Firebase Storage.
-4. Backend makes the file URL accessible.
-5. Backend stores image URL in MongoDB.
+3. Backend uploads file buffer to Cloudinary.
+4. Cloudinary returns a CDN image URL and public id.
+5. Backend stores image URL and public id in MongoDB.
 
 ## Firebase Cloud Messaging Approach
 

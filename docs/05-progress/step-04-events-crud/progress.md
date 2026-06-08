@@ -59,7 +59,7 @@ Implement the primary CRUD feature for events.
 - Backend CRUD is implemented and verified.
 - Flutter event screens are not connected yet; that is still needed to fully prove CRUD from the Android UI.
 - Event uses `categoryId` as an ObjectId string, matching the current database plan. Category seed/module can be added later.
-- Image upload is not included in this step. `imageUrl` is accepted for now and Firebase Storage upload is planned in Step 05.
+- Image upload is not included in this step. `imageUrl` is accepted for now and Cloudinary upload is planned in Step 05.
 
 ## Next Action
 

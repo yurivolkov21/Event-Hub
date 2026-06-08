@@ -38,8 +38,11 @@ JWT_EXPIRES_IN=7d
 FIREBASE_PROJECT_ID=your-project-id
 FIREBASE_CLIENT_EMAIL=firebase-adminsdk@example.iam.gserviceaccount.com
 FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-FIREBASE_STORAGE_BUCKET=your-project-id.appspot.com
 FCM_DRY_RUN=false
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+CLOUDINARY_FOLDER=eventhub/events
 ```
 
 ## Flutter Environment Notes
@@ -60,10 +63,16 @@ Android emulator should use `10.0.2.2` to reach localhost backend.
 
 ## Firebase Notes
 
-- Firebase service account is only for backend.
+- Firebase service account is only for backend FCM/Admin SDK usage.
 - Flutter Android may need `google-services.json`.
 - `google-services.json` is ignored in this project to avoid accidental exposure.
 - Document setup steps in the final README.
+
+## Cloudinary Notes
+
+- Cloudinary is used for image storage to avoid Firebase Storage billing setup in the learning project.
+- Never commit `CLOUDINARY_API_SECRET`.
+- Store Cloudinary `public_id` in MongoDB so replaced or deleted event images can be cleaned up later.
 
 ## Secret Rotation
 
