@@ -11,6 +11,9 @@ Implemented Flutter foundation:
 - FCM permission request and token retrieval are scaffolded.
 - `FcmNotificationService.registerCurrentToken(authToken)` can be called after login.
 - API base URL can be overridden with `--dart-define=API_BASE_URL=...`.
+- Sign-in and sign-up forms are implemented.
+- JWT and user summary are stored with `flutter_secure_storage`.
+- Saved sessions are restored through `GET /api/auth/me`.
 
 ## Suggested Folder Structure
 
@@ -120,8 +123,8 @@ Use `go_router` for named routes:
 
 Store:
 
-- JWT token
-- Current user summary
+- JWT token: implemented
+- Current user summary: implemented
 - Onboarding seen flag
 
 Use `flutter_secure_storage` for token.
@@ -130,10 +133,10 @@ Use `flutter_secure_storage` for token.
 
 Create a reusable HTTP client that:
 
-- Uses backend base URL
-- Adds JWT header when available
-- Handles 401 by clearing session
-- Parses error response
+- Uses backend base URL: implemented
+- Adds JWT header when available: implemented
+- Handles 401 by clearing session: implemented in session restore
+- Parses error response: implemented
 
 ## FCM Integration
 
@@ -142,7 +145,7 @@ Flutter should:
 - Initialize Firebase: implemented
 - Request notification permission: implemented
 - Get FCM token: implemented
-- Send token to backend after login: service method implemented, auth flow call pending
+- Send token to backend after login: implemented in auth controller
 - Listen for foreground messages: scaffolded
 - Open related screen when user taps notification
 

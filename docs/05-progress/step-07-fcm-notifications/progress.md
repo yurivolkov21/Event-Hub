@@ -29,6 +29,7 @@ Implement Firebase Cloud Messaging push notifications.
 - Added `server/src/modules/notifications/fcm-token.service.ts`
 - Added `lib/core/config/app_config.dart`
 - Added `lib/features/notifications/fcm_notification_service.dart`
+- Updated `lib/features/auth/application/auth_controller.dart`
 - Updated `server/src/config/firebase.ts`
 - Updated `docs/02-architecture/database-model.md`
 - Updated `server/src/modules/notifications/notification.schemas.ts`
@@ -70,7 +71,8 @@ Implement Firebase Cloud Messaging push notifications.
 - Flutter package install added `firebase_core`, `firebase_messaging`, and `http`.
 - `flutter pub add` updated dependencies, but initially reported Windows Developer Mode/symlink support guidance for plugins.
 - Analyze/test passed after package and widget test updates.
+- Auth controller now calls `registerCurrentToken(authToken)` after login, register, and session restore.
 
 ## Next Action
 
-Connect auth UI/API flow so Flutter can call `registerCurrentToken(authToken)` after login, then test real push delivery on Android.
+Run the app on Android with the backend active, sign in, confirm token registration in MongoDB, then test real push delivery.
