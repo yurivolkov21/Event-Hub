@@ -66,6 +66,71 @@ class EventItem {
   }
 }
 
+class EventCategoryOption {
+  const EventCategoryOption({required this.id, required this.name});
+
+  final String id;
+  final String name;
+}
+
+const eventCategoryOptions = [
+  EventCategoryOption(id: '650000000000000000000001', name: 'Sports'),
+  EventCategoryOption(id: '650000000000000000000002', name: 'Music'),
+  EventCategoryOption(id: '650000000000000000000003', name: 'Food'),
+  EventCategoryOption(id: '650000000000000000000004', name: 'Art'),
+  EventCategoryOption(id: '650000000000000000000005', name: 'Movie'),
+  EventCategoryOption(id: '650000000000000000000006', name: 'Concert'),
+  EventCategoryOption(id: '650000000000000000000007', name: 'Games Online'),
+  EventCategoryOption(id: '650000000000000000000008', name: 'Others'),
+];
+
+class EventFormInput {
+  const EventFormInput({
+    required this.title,
+    required this.description,
+    required this.categoryId,
+    required this.startAt,
+    required this.endAt,
+    required this.venueName,
+    required this.address,
+    required this.price,
+    required this.capacity,
+    required this.status,
+    this.city,
+    this.country,
+  });
+
+  final String title;
+  final String description;
+  final String categoryId;
+  final DateTime startAt;
+  final DateTime endAt;
+  final String venueName;
+  final String address;
+  final String? city;
+  final String? country;
+  final double price;
+  final int capacity;
+  final String status;
+
+  Map<String, dynamic> toJson() {
+    return {
+      'title': title,
+      'description': description,
+      'categoryId': categoryId,
+      'startAt': startAt.toUtc().toIso8601String(),
+      'endAt': endAt.toUtc().toIso8601String(),
+      'venueName': venueName,
+      'address': address,
+      'city': city,
+      'country': country,
+      'price': price,
+      'capacity': capacity,
+      'status': status,
+    };
+  }
+}
+
 class EventPagination {
   const EventPagination({
     required this.page,

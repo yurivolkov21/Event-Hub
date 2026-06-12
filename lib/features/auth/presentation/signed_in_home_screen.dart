@@ -56,7 +56,11 @@ class SignedInHomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) => const EventListScreen(),
+                      builder: (_) => EventListScreen(
+                        authToken: controller.session!.token,
+                        currentUserId: user.id,
+                        currentUserRole: user.role,
+                      ),
                     ),
                   );
                 },

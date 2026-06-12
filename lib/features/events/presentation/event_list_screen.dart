@@ -4,11 +4,21 @@ import '../../../core/networking/api_client.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'event_detail_screen.dart';
+import 'event_form_screen.dart';
 import 'event_image.dart';
 
 class EventListScreen extends StatefulWidget {
-  const EventListScreen({this.eventRepository, super.key});
+  const EventListScreen({
+    required this.authToken,
+    required this.currentUserId,
+    required this.currentUserRole,
+    this.eventRepository,
+    super.key,
+  });
 
+  final String authToken;
+  final String currentUserId;
+  final String currentUserRole;
   final EventRepository? eventRepository;
 
   @override
@@ -59,15 +69,42 @@ class _EventListScreenState extends State<EventListScreen> {
   }
 
   void _openEvent(EventItem event) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => EventDetailScreen(eventId: event.id),
+    Navigator.of(context)
+        .push<bool>(
+          MaterialPageRoute<bool>(
+            builder: (_) => EventDetailScreen(
+              eventId: event.id,
+              authToken: widget.authToken,
+              currentUserId: widget.currentUserId,
+              currentUserRole: widget.currentUserRole,
+            ),
+          ),
+        )
+        .then((changed) {
+          if (changed == true) {
+            _loadEvents();
+          }
+        });
+  }
+
+  Future<void> _openCreateEvent() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => EventFormScreen(authToken: widget.authToken),
       ),
     );
+
+    if (changed == true) {
+      await _loadEvents();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final canCreate =
+        widget.currentUserRole == 'organizer' ||
+        widget.currentUserRole == 'admin';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Events'),
@@ -79,6 +116,13 @@ class _EventListScreenState extends State<EventListScreen> {
           ),
         ],
       ),
+      floatingActionButton: canCreate
+          ? FloatingActionButton(
+              tooltip: 'Create event',
+              onPressed: _openCreateEvent,
+              child: const Icon(Icons.add),
+            )
+          : null,
       body: RefreshIndicator(
         onRefresh: _loadEvents,
         child: ListView(

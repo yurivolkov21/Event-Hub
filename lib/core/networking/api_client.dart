@@ -47,6 +47,32 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  Future<Map<String, dynamic>> putJson(
+    String path, {
+    required Map<String, dynamic> body,
+    String? authToken,
+  }) async {
+    final response = await _httpClient.put(
+      _uri(path),
+      headers: _headers(authToken: authToken),
+      body: jsonEncode(body),
+    );
+
+    return _decodeResponse(response);
+  }
+
+  Future<Map<String, dynamic>> deleteJson(
+    String path, {
+    String? authToken,
+  }) async {
+    final response = await _httpClient.delete(
+      _uri(path),
+      headers: _headers(authToken: authToken),
+    );
+
+    return _decodeResponse(response);
+  }
+
   Uri _uri(String path, {Map<String, String>? queryParameters}) {
     final normalizedBaseUrl = AppConfig.apiBaseUrl.endsWith('/')
         ? AppConfig.apiBaseUrl.substring(0, AppConfig.apiBaseUrl.length - 1)

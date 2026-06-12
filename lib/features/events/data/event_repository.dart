@@ -29,4 +29,38 @@ class EventRepository {
 
     return EventItem.fromJson(response['event'] as Map<String, dynamic>);
   }
+
+  Future<EventItem> createEvent({
+    required String authToken,
+    required EventFormInput input,
+  }) async {
+    final response = await _apiClient.postJson(
+      '/events',
+      authToken: authToken,
+      body: input.toJson(),
+    );
+
+    return EventItem.fromJson(response['event'] as Map<String, dynamic>);
+  }
+
+  Future<EventItem> updateEvent({
+    required String eventId,
+    required String authToken,
+    required EventFormInput input,
+  }) async {
+    final response = await _apiClient.putJson(
+      '/events/$eventId',
+      authToken: authToken,
+      body: input.toJson(),
+    );
+
+    return EventItem.fromJson(response['event'] as Map<String, dynamic>);
+  }
+
+  Future<void> deleteEvent({
+    required String eventId,
+    required String authToken,
+  }) async {
+    await _apiClient.deleteJson('/events/$eventId', authToken: authToken);
+  }
 }

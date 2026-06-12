@@ -15,6 +15,7 @@ Implemented Flutter foundation:
 - JWT and user summary are stored with `flutter_secure_storage`.
 - Saved sessions are restored through `GET /api/auth/me`.
 - Event list and detail screens are connected to the backend Events API.
+- Organizer create, edit, and delete event flows are implemented with JSON payloads.
 
 ## Suggested Folder Structure
 
@@ -90,8 +91,8 @@ Main:
 Organizer:
 
 - My created events
-- Create event
-- Edit event
+- Create event: implemented
+- Edit event: implemented
 - Event management detail
 
 Booking:

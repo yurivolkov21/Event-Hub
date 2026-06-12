@@ -3,16 +3,23 @@ import 'package:flutter/material.dart';
 import '../../../core/networking/api_client.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
+import 'event_form_screen.dart';
 import 'event_image.dart';
 
 class EventDetailScreen extends StatefulWidget {
   const EventDetailScreen({
     required this.eventId,
+    required this.authToken,
+    required this.currentUserId,
+    required this.currentUserRole,
     this.eventRepository,
     super.key,
   });
 
   final String eventId;
+  final String authToken;
+  final String currentUserId;
+  final String currentUserRole;
   final EventRepository? eventRepository;
 
   @override
@@ -55,9 +62,29 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final event = _event;
+    final canManage =
+        event != null &&
+        (widget.currentUserRole == 'admin' ||
+            event.organizerId == widget.currentUserId);
 
     return Scaffold(
-      appBar: AppBar(title: Text(event?.title ?? 'Event')),
+      appBar: AppBar(
+        title: Text(event?.title ?? 'Event'),
+        actions: [
+          if (canManage) ...[
+            IconButton(
+              tooltip: 'Edit',
+              onPressed: () => _openEditEvent(event),
+              icon: const Icon(Icons.edit),
+            ),
+            IconButton(
+              tooltip: 'Delete',
+              onPressed: () => _confirmDelete(event),
+              icon: const Icon(Icons.delete_outline),
+            ),
+          ],
+        ],
+      ),
       body: switch ((_isLoading, _errorMessage, event)) {
         (true, _, _) => const Center(child: CircularProgressIndicator()),
         (false, final message?, _) => _EventErrorState(
@@ -70,6 +97,64 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         _ => const SizedBox.shrink(),
       },
     );
+  }
+
+  Future<void> _openEditEvent(EventItem event) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => EventFormScreen(
+          authToken: widget.authToken,
+          event: event,
+          eventRepository: _eventRepository,
+        ),
+      ),
+    );
+
+    if (changed == true && mounted) {
+      Navigator.of(context).pop(true);
+    }
+  }
+
+  Future<void> _confirmDelete(EventItem event) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete event?'),
+          content: Text('This will permanently delete "${event.title}".'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pop(true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    try {
+      await _eventRepository.deleteEvent(
+        eventId: event.id,
+        authToken: widget.authToken,
+      );
+
+      if (mounted) {
+        Navigator.of(context).pop(true);
+      }
+    } on ApiException catch (error) {
+      setState(() => _errorMessage = error.message);
+    } catch (_) {
+      setState(() => _errorMessage = 'Unable to delete event');
+    }
   }
 }
 
