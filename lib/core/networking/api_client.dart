@@ -20,9 +20,13 @@ class ApiClient {
 
   final http.Client _httpClient;
 
-  Future<Map<String, dynamic>> getJson(String path, {String? authToken}) async {
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    String? authToken,
+    Map<String, String>? queryParameters,
+  }) async {
     final response = await _httpClient.get(
-      _uri(path),
+      _uri(path, queryParameters: queryParameters),
       headers: _headers(authToken: authToken),
     );
 
@@ -43,13 +47,17 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
-  Uri _uri(String path) {
+  Uri _uri(String path, {Map<String, String>? queryParameters}) {
     final normalizedBaseUrl = AppConfig.apiBaseUrl.endsWith('/')
         ? AppConfig.apiBaseUrl.substring(0, AppConfig.apiBaseUrl.length - 1)
         : AppConfig.apiBaseUrl;
     final normalizedPath = path.startsWith('/') ? path : '/$path';
 
-    return Uri.parse('$normalizedBaseUrl$normalizedPath');
+    return Uri.parse('$normalizedBaseUrl$normalizedPath').replace(
+      queryParameters: queryParameters?.isEmpty ?? true
+          ? null
+          : queryParameters,
+    );
   }
 
   Map<String, String> _headers({String? authToken}) {

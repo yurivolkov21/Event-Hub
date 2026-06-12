@@ -14,6 +14,7 @@ Implemented Flutter foundation:
 - Sign-in and sign-up forms are implemented.
 - JWT and user summary are stored with `flutter_secure_storage`.
 - Saved sessions are restored through `GET /api/auth/me`.
+- Event list and detail screens are connected to the backend Events API.
 
 ## Suggested Folder Structure
 
@@ -78,10 +79,10 @@ Auth:
 Main:
 
 - Home
-- Event list
+- Event list: implemented
 - Search
 - Filter
-- Event detail
+- Event detail: implemented
 - Map view
 - Notifications
 - Profile

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../events/presentation/event_list_screen.dart';
 import '../application/auth_controller.dart';
 
 class SignedInHomeScreen extends StatelessWidget {
@@ -49,6 +50,18 @@ class SignedInHomeScreen extends StatelessWidget {
                       : Icons.person_outline,
                 ),
                 label: Text(user.role == 'organizer' ? 'Organizer' : 'User'),
+              ),
+              const SizedBox(height: 24),
+              FilledButton.icon(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const EventListScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.event_note),
+                label: const Text('Events'),
               ),
             ],
           ),
