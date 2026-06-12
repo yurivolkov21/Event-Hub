@@ -33,7 +33,24 @@ class EventRepository {
   Future<EventItem> createEvent({
     required String authToken,
     required EventFormInput input,
+    EventImageUpload? image,
   }) async {
+    if (image != null) {
+      final response = await _apiClient.postMultipart(
+        '/events',
+        authToken: authToken,
+        fields: input.toMultipartFields(),
+        file: ApiMultipartFile(
+          fieldName: 'image',
+          fileName: image.fileName,
+          bytes: image.bytes,
+          mimeType: image.mimeType,
+        ),
+      );
+
+      return EventItem.fromJson(response['event'] as Map<String, dynamic>);
+    }
+
     final response = await _apiClient.postJson(
       '/events',
       authToken: authToken,
@@ -47,7 +64,24 @@ class EventRepository {
     required String eventId,
     required String authToken,
     required EventFormInput input,
+    EventImageUpload? image,
   }) async {
+    if (image != null) {
+      final response = await _apiClient.putMultipart(
+        '/events/$eventId',
+        authToken: authToken,
+        fields: input.toMultipartFields(),
+        file: ApiMultipartFile(
+          fieldName: 'image',
+          fileName: image.fileName,
+          bytes: image.bytes,
+          mimeType: image.mimeType,
+        ),
+      );
+
+      return EventItem.fromJson(response['event'] as Map<String, dynamic>);
+    }
+
     final response = await _apiClient.putJson(
       '/events/$eventId',
       authToken: authToken,

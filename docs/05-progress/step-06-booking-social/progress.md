@@ -1,6 +1,6 @@
 # Step 06 - Booking And Social
 
-Status: In progress
+Status: Implementation complete, manual QA pending
 
 ## Goal
 
@@ -24,7 +24,10 @@ Add booking, bookmark, invitation, and social features from the EventHub design.
 - `DELETE /api/bookings/:id`
 - Bookmark create/list/delete
 - Invitation create/accept/reject
+- User search/list for invite friend
 - My tickets UI
+- Invite Friend UI
+- Native Share flow
 
 ## Files Changed
 
@@ -52,8 +55,25 @@ Add booking, bookmark, invitation, and social features from the EventHub design.
 - Added `server/src/modules/notifications/notification.service.ts`
 - Added `server/src/modules/notifications/notification.controller.ts`
 - Added `server/src/modules/notifications/notification.routes.ts`
+- Added `server/src/modules/users/user.schemas.ts`
+- Added `server/src/modules/users/user.service.ts`
+- Added `server/src/modules/users/user.controller.ts`
+- Added `server/src/modules/users/user.routes.ts`
+- Added `lib/features/bookings/data/booking_models.dart`
+- Added `lib/features/bookings/data/booking_repository.dart`
+- Added `lib/features/bookings/presentation/my_tickets_screen.dart`
+- Added `lib/features/bookmarks/data/bookmark_models.dart`
+- Added `lib/features/bookmarks/data/bookmark_repository.dart`
+- Added `lib/features/users/data/user_models.dart`
+- Added `lib/features/users/data/user_repository.dart`
+- Added `lib/features/invitations/data/invitation_models.dart`
+- Added `lib/features/invitations/data/invitation_repository.dart`
+- Added `lib/features/invitations/presentation/invite_friends_sheet.dart`
+- Updated `lib/features/events/presentation/event_detail_screen.dart`
+- Updated `lib/features/auth/presentation/signed_in_home_screen.dart`
 - Updated `server/src/modules/events/event.routes.ts`
 - Updated `server/src/app.ts`
+- Updated `pubspec.yaml`
 - Updated `docs/02-architecture/api-contract.md`
 
 ## Verification
@@ -76,6 +96,19 @@ Add booking, bookmark, invitation, and social features from the EventHub design.
 - User cancelled booking with `DELETE /api/bookings/:id`.
 - Event `bookedCount` decreased after cancellation.
 - Test users, event, booking, bookmark, invitation, and notifications were removed from local MongoDB after verification.
+- `flutter analyze` passed after Flutter booking/bookmark integration.
+- `flutter test` passed after Flutter booking/bookmark integration.
+- `flutter build web` passed after Flutter booking/bookmark integration.
+- `flutter build apk --debug` passed after Flutter booking/bookmark integration.
+- `pnpm typecheck` passed after Flutter booking/bookmark integration.
+- `pnpm build` passed after Flutter booking/bookmark integration.
+- `dart format lib test` passed after Invite Friend and Share integration.
+- `flutter analyze` passed after Invite Friend and Share integration.
+- `flutter test` passed after Invite Friend and Share integration.
+- `flutter build web` passed after Invite Friend and Share integration.
+- `flutter build apk --debug` passed after Invite Friend and Share integration.
+- `pnpm typecheck` passed after adding `GET /api/users`.
+- `pnpm build` passed after adding `GET /api/users`.
 
 ## Notes
 
@@ -83,10 +116,14 @@ Add booking, bookmark, invitation, and social features from the EventHub design.
 - Booking success should create a notification record.
 - Backend APIs are implemented and verified.
 - FCM push delivery is not part of this step; Step 06 creates notification history records only.
-- Flutter My Tickets, Bookmark button, Invite Friend UI, and Share flow are still pending.
+- Flutter My Tickets screen is implemented.
+- Flutter event detail can create bookings and toggle bookmarks.
+- Flutter event detail can invite friends through a searchable bottom sheet.
+- Flutter event detail can open the native share sheet through `share_plus`.
 - Booking cancellation changes status to `cancelled` and decrements event `bookedCount`.
 - Bookmark creation is idempotent through a unique `userId + eventId` index.
+- `flutter build apk --debug` currently passes with a `share_plus` Kotlin Gradle Plugin future-compatibility warning. It does not block the debug build.
 
 ## Next Action
 
-Start Step 07 FCM notifications, or connect Flutter UI for auth/events/booking/bookmark before adding push delivery.
+Manual test booking, bookmark, invite friend, share, notifications, and FCM on Android emulator with the local backend.

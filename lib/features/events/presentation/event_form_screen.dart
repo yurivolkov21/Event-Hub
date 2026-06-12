@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/networking/api_client.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
+import 'event_image.dart';
 
 class EventFormScreen extends StatefulWidget {
   const EventFormScreen({
@@ -30,6 +32,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   final _countryController = TextEditingController();
   final _priceController = TextEditingController();
   final _capacityController = TextEditingController();
+  final _imagePicker = ImagePicker();
 
   late final EventRepository _eventRepository;
   late DateTime _startAt;
@@ -37,6 +40,7 @@ class _EventFormScreenState extends State<EventFormScreen> {
   late String _categoryId;
   late String _status;
 
+  EventImageUpload? _selectedImage;
   String? _errorMessage;
   bool _isSaving = false;
 
@@ -125,6 +129,36 @@ class _EventFormScreenState extends State<EventFormScreen> {
     });
   }
 
+  Future<void> _pickImage() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1600,
+      imageQuality: 82,
+    );
+
+    if (image == null) {
+      return;
+    }
+
+    final bytes = await image.readAsBytes();
+
+    if (bytes.length > 5 * 1024 * 1024) {
+      setState(() {
+        _errorMessage = 'Image file size must be 5MB or less';
+      });
+      return;
+    }
+
+    setState(() {
+      _selectedImage = EventImageUpload(
+        bytes: bytes,
+        fileName: image.name,
+        mimeType: _mimeTypeForImage(image),
+      );
+      _errorMessage = null;
+    });
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -161,11 +195,13 @@ class _EventFormScreenState extends State<EventFormScreen> {
           eventId: widget.event!.id,
           authToken: widget.authToken,
           input: input,
+          image: _selectedImage,
         );
       } else {
         await _eventRepository.createEvent(
           authToken: widget.authToken,
           input: input,
+          image: _selectedImage,
         );
       }
 
@@ -193,6 +229,15 @@ class _EventFormScreenState extends State<EventFormScreen> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              _ImagePickerSection(
+                existingImageUrl: widget.event?.imageUrl,
+                selectedImage: _selectedImage,
+                onPickImage: _pickImage,
+                onClearSelection: _selectedImage == null
+                    ? null
+                    : () => setState(() => _selectedImage = null),
+              ),
+              const SizedBox(height: 14),
               TextFormField(
                 controller: _titleController,
                 textInputAction: TextInputAction.next,
@@ -412,6 +457,62 @@ class _EventFormScreenState extends State<EventFormScreen> {
   }
 }
 
+class _ImagePickerSection extends StatelessWidget {
+  const _ImagePickerSection({
+    required this.existingImageUrl,
+    required this.selectedImage,
+    required this.onPickImage,
+    required this.onClearSelection,
+  });
+
+  final String? existingImageUrl;
+  final EventImageUpload? selectedImage;
+  final VoidCallback onPickImage;
+  final VoidCallback? onClearSelection;
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = selectedImage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: selected == null
+              ? EventImage(imageUrl: existingImageUrl, height: 180)
+              : Image.memory(
+                  selected.bytes,
+                  height: 180,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: onPickImage,
+                icon: const Icon(Icons.image_outlined),
+                label: Text(selected == null ? 'Choose image' : 'Change image'),
+              ),
+            ),
+            if (onClearSelection != null) ...[
+              const SizedBox(width: 10),
+              IconButton.outlined(
+                tooltip: 'Clear selected image',
+                onPressed: onClearSelection,
+                icon: const Icon(Icons.close),
+              ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 class _DateTimeTile extends StatelessWidget {
   const _DateTimeTile({
     required this.label,
@@ -465,4 +566,28 @@ String _formatDateTime(DateTime value) {
   final minute = local.minute.toString().padLeft(2, '0');
 
   return '$day/$month/${local.year} $hour:$minute';
+}
+
+String _mimeTypeForImage(XFile image) {
+  final mimeType = image.mimeType;
+
+  if (mimeType != null && mimeType.startsWith('image/')) {
+    return mimeType;
+  }
+
+  final lowerCaseName = image.name.toLowerCase();
+
+  if (lowerCaseName.endsWith('.png')) {
+    return 'image/png';
+  }
+
+  if (lowerCaseName.endsWith('.webp')) {
+    return 'image/webp';
+  }
+
+  if (lowerCaseName.endsWith('.gif')) {
+    return 'image/gif';
+  }
+
+  return 'image/jpeg';
 }

@@ -13,6 +13,7 @@ import { eventRouter } from './modules/events/event.routes';
 import { healthRouter } from './routes/health.routes';
 import { invitationRouter } from './modules/invitations/invitation.routes';
 import { notificationRouter } from './modules/notifications/notification.routes';
+import { userRouter } from './modules/users/user.routes';
 
 export const createApp = (): Express => {
   const app = express();
@@ -34,6 +35,7 @@ export const createApp = (): Express => {
   app.use('/api/bookmarks', bookmarkRouter);
   app.use('/api/invitations', invitationRouter);
   app.use('/api/notifications', notificationRouter);
+  app.use('/api/users', userRouter);
 
   app.use(notFoundHandler);
   app.use(errorHandler);

@@ -60,6 +60,7 @@ API_BASE_URL=http://10.0.2.2:4000/api
 ```
 
 Android emulator should use `10.0.2.2` to reach localhost backend.
+Chrome/web should use `http://localhost:4000/api`; the app now chooses this automatically when running on web unless `API_BASE_URL` is provided with `--dart-define`.
 
 ## Firebase Notes
 

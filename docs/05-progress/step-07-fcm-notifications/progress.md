@@ -29,7 +29,11 @@ Implement Firebase Cloud Messaging push notifications.
 - Added `server/src/modules/notifications/fcm-token.service.ts`
 - Added `lib/core/config/app_config.dart`
 - Added `lib/features/notifications/fcm_notification_service.dart`
+- Added `lib/features/notifications/data/notification_models.dart`
+- Added `lib/features/notifications/data/notification_repository.dart`
+- Added `lib/features/notifications/presentation/notification_list_screen.dart`
 - Updated `lib/features/auth/application/auth_controller.dart`
+- Updated `lib/features/auth/presentation/signed_in_home_screen.dart`
 - Updated `server/src/config/firebase.ts`
 - Updated `docs/02-architecture/database-model.md`
 - Updated `server/src/modules/notifications/notification.schemas.ts`
@@ -54,6 +58,12 @@ Implement Firebase Cloud Messaging push notifications.
 - `flutter analyze` passed.
 - `flutter test` passed.
 - `flutter build apk --debug` passed and produced `build/app/outputs/flutter-apk/app-debug.apk`.
+- `flutter analyze` passed after notification history screen integration.
+- `flutter test` passed after notification history screen integration.
+- `flutter build web` passed after notification history screen integration.
+- `flutter build apk --debug` passed after notification history screen integration.
+- `pnpm typecheck` passed after notification history screen integration.
+- `pnpm build` passed after notification history screen integration.
 - `POST /api/notifications/register-token` returned `201` in local API verification.
 - FCM token was saved in MongoDB during local API verification.
 - Notification history remained saved when push delivery used a fake token and failed.
@@ -72,7 +82,9 @@ Implement Firebase Cloud Messaging push notifications.
 - `flutter pub add` updated dependencies, but initially reported Windows Developer Mode/symlink support guidance for plugins.
 - Analyze/test passed after package and widget test updates.
 - Auth controller now calls `registerCurrentToken(authToken)` after login, register, and session restore.
+- Flutter notification history screen is implemented.
+- Flutter can mark notifications as read.
 
 ## Next Action
 
-Run the app on Android with the backend active, sign in, confirm token registration in MongoDB, then test real push delivery.
+Manual test notification history from app, then run Android emulator/device FCM token and real push delivery verification.

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/networking/api_client.dart';
+import '../../bookings/data/booking_repository.dart';
+import '../../bookmarks/data/bookmark_repository.dart';
+import '../../invitations/presentation/invite_friends_sheet.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'event_form_screen.dart';
@@ -28,14 +32,21 @@ class EventDetailScreen extends StatefulWidget {
 
 class _EventDetailScreenState extends State<EventDetailScreen> {
   late final EventRepository _eventRepository;
+  late final BookingRepository _bookingRepository;
+  late final BookmarkRepository _bookmarkRepository;
   EventItem? _event;
   String? _errorMessage;
   bool _isLoading = true;
+  bool _isBookmarked = false;
+  bool _isBookmarkLoading = false;
+  bool _isBooking = false;
 
   @override
   void initState() {
     super.initState();
     _eventRepository = widget.eventRepository ?? EventRepository();
+    _bookingRepository = BookingRepository();
+    _bookmarkRepository = BookmarkRepository();
     _loadEvent();
   }
 
@@ -48,6 +59,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     try {
       final event = await _eventRepository.getEventById(widget.eventId);
       setState(() => _event = event);
+      await _loadBookmarkState(event.id);
     } on ApiException catch (error) {
       setState(() => _errorMessage = error.message);
     } catch (_) {
@@ -56,6 +68,24 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadBookmarkState(String eventId) async {
+    try {
+      final bookmarks = await _bookmarkRepository.listMyBookmarks(
+        authToken: widget.authToken,
+      );
+
+      if (mounted) {
+        setState(() {
+          _isBookmarked = bookmarks.any(
+            (bookmark) => bookmark.eventId == eventId,
+          );
+        });
+      }
+    } catch (_) {
+      // Bookmark state is helpful but should not block event detail rendering.
     }
   }
 
@@ -83,6 +113,16 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
               icon: const Icon(Icons.delete_outline),
             ),
           ],
+          if (event != null)
+            IconButton(
+              tooltip: _isBookmarked ? 'Remove bookmark' : 'Bookmark',
+              onPressed: _isBookmarkLoading
+                  ? null
+                  : () => _toggleBookmark(event),
+              icon: Icon(
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              ),
+            ),
         ],
       ),
       body: switch ((_isLoading, _errorMessage, event)) {
@@ -93,10 +133,168 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         (false, _, final loadedEvent?) => _EventDetailContent(
           event: loadedEvent,
+          isBooking: _isBooking,
+          onBook: () => _bookEvent(loadedEvent),
+          onInvite: () => _openInviteFriends(loadedEvent),
+          onShare: () => _shareEvent(loadedEvent),
         ),
         _ => const SizedBox.shrink(),
       },
     );
+  }
+
+  Future<void> _toggleBookmark(EventItem event) async {
+    setState(() => _isBookmarkLoading = true);
+
+    try {
+      if (_isBookmarked) {
+        await _bookmarkRepository.deleteBookmark(
+          authToken: widget.authToken,
+          eventId: event.id,
+        );
+      } else {
+        await _bookmarkRepository.createBookmark(
+          authToken: widget.authToken,
+          eventId: event.id,
+        );
+      }
+
+      if (mounted) {
+        setState(() => _isBookmarked = !_isBookmarked);
+      }
+    } on ApiException catch (error) {
+      setState(() => _errorMessage = error.message);
+    } catch (_) {
+      setState(() => _errorMessage = 'Unable to update bookmark');
+    } finally {
+      if (mounted) {
+        setState(() => _isBookmarkLoading = false);
+      }
+    }
+  }
+
+  Future<void> _bookEvent(EventItem event) async {
+    final quantity = await _pickQuantity();
+
+    if (quantity == null) {
+      return;
+    }
+
+    setState(() {
+      _isBooking = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _bookingRepository.createBooking(
+        authToken: widget.authToken,
+        eventId: event.id,
+        quantity: quantity,
+      );
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Booking confirmed')));
+      }
+
+      await _loadEvent();
+    } on ApiException catch (error) {
+      setState(() => _errorMessage = error.message);
+    } catch (_) {
+      setState(() => _errorMessage = 'Unable to book event');
+    } finally {
+      if (mounted) {
+        setState(() => _isBooking = false);
+      }
+    }
+  }
+
+  Future<int?> _pickQuantity() {
+    var quantity = 1;
+
+    return showDialog<int>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Book ticket'),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton.outlined(
+                    onPressed: quantity <= 1
+                        ? null
+                        : () => setDialogState(() => quantity--),
+                    icon: const Icon(Icons.remove),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    child: Text(
+                      '$quantity',
+                      style: Theme.of(context).textTheme.headlineSmall,
+                    ),
+                  ),
+                  IconButton.outlined(
+                    onPressed: quantity >= 10
+                        ? null
+                        : () => setDialogState(() => quantity++),
+                    icon: const Icon(Icons.add),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton.icon(
+                  onPressed: () => Navigator.of(context).pop(quantity),
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  label: const Text('Book'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openInviteFriends(EventItem event) async {
+    final invited = await showInviteFriendsSheet(
+      context: context,
+      authToken: widget.authToken,
+      eventId: event.id,
+    );
+
+    if (invited == true && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invitations sent')));
+    }
+  }
+
+  Future<void> _shareEvent(EventItem event) async {
+    final text = [
+      event.title,
+      _formatDateTime(event.startAt),
+      '${event.venueName}, ${event.address}',
+      if (event.description.isNotEmpty) event.description,
+    ].join('\n\n');
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(text: text, subject: event.title),
+      );
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Unable to open share sheet')),
+        );
+      }
+    }
   }
 
   Future<void> _openEditEvent(EventItem event) async {
@@ -159,9 +357,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 }
 
 class _EventDetailContent extends StatelessWidget {
-  const _EventDetailContent({required this.event});
+  const _EventDetailContent({
+    required this.event,
+    required this.isBooking,
+    required this.onBook,
+    required this.onInvite,
+    required this.onShare,
+  });
 
   final EventItem event;
+  final bool isBooking;
+  final VoidCallback onBook;
+  final VoidCallback onInvite;
+  final VoidCallback onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -220,6 +428,37 @@ class _EventDetailContent extends StatelessWidget {
                 style: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(height: 1.45),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: event.status == 'published' ? onInvite : null,
+                      icon: const Icon(Icons.person_add_alt_1),
+                      label: const Text('Invite'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onShare,
+                      icon: const Icon(Icons.ios_share),
+                      label: const Text('Share'),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: isBooking || event.status != 'published'
+                      ? null
+                      : onBook,
+                  icon: const Icon(Icons.confirmation_number_outlined),
+                  label: Text(isBooking ? 'Booking...' : 'Book Ticket'),
+                ),
               ),
             ],
           ),

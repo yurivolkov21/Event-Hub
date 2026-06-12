@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import '../config/app_config.dart';
 
@@ -12,6 +14,20 @@ class ApiException implements Exception {
 
   @override
   String toString() => message;
+}
+
+class ApiMultipartFile {
+  const ApiMultipartFile({
+    required this.fieldName,
+    required this.fileName,
+    required this.bytes,
+    required this.mimeType,
+  });
+
+  final String fieldName;
+  final String fileName;
+  final Uint8List bytes;
+  final String mimeType;
 }
 
 class ApiClient {
@@ -73,6 +89,36 @@ class ApiClient {
     return _decodeResponse(response);
   }
 
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    required Map<String, String> fields,
+    required ApiMultipartFile file,
+    String? authToken,
+  }) {
+    return _sendMultipart(
+      method: 'POST',
+      path: path,
+      fields: fields,
+      file: file,
+      authToken: authToken,
+    );
+  }
+
+  Future<Map<String, dynamic>> putMultipart(
+    String path, {
+    required Map<String, String> fields,
+    required ApiMultipartFile file,
+    String? authToken,
+  }) {
+    return _sendMultipart(
+      method: 'PUT',
+      path: path,
+      fields: fields,
+      file: file,
+      authToken: authToken,
+    );
+  }
+
   Uri _uri(String path, {Map<String, String>? queryParameters}) {
     final normalizedBaseUrl = AppConfig.apiBaseUrl.endsWith('/')
         ? AppConfig.apiBaseUrl.substring(0, AppConfig.apiBaseUrl.length - 1)
@@ -91,6 +137,35 @@ class ApiClient {
       'Content-Type': 'application/json',
       if (authToken != null) 'Authorization': 'Bearer $authToken',
     };
+  }
+
+  Map<String, String> _authHeaders({String? authToken}) {
+    return {if (authToken != null) 'Authorization': 'Bearer $authToken'};
+  }
+
+  Future<Map<String, dynamic>> _sendMultipart({
+    required String method,
+    required String path,
+    required Map<String, String> fields,
+    required ApiMultipartFile file,
+    String? authToken,
+  }) async {
+    final request = http.MultipartRequest(method, _uri(path))
+      ..headers.addAll(_authHeaders(authToken: authToken))
+      ..fields.addAll(fields)
+      ..files.add(
+        http.MultipartFile.fromBytes(
+          file.fieldName,
+          file.bytes,
+          filename: file.fileName,
+          contentType: MediaType.parse(file.mimeType),
+        ),
+      );
+
+    final streamedResponse = await _httpClient.send(request);
+    final response = await http.Response.fromStream(streamedResponse);
+
+    return _decodeResponse(response);
   }
 
   Map<String, dynamic> _decodeResponse(http.Response response) {

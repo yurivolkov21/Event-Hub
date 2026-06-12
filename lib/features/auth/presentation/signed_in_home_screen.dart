@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../bookings/presentation/my_tickets_screen.dart';
 import '../../events/presentation/event_list_screen.dart';
+import '../../notifications/presentation/notification_list_screen.dart';
 import '../application/auth_controller.dart';
 
 class SignedInHomeScreen extends StatelessWidget {
@@ -52,7 +54,9 @@ class SignedInHomeScreen extends StatelessWidget {
                 label: Text(user.role == 'organizer' ? 'Organizer' : 'User'),
               ),
               const SizedBox(height: 24),
-              FilledButton.icon(
+              _HomeActionButton(
+                icon: Icons.event_note,
+                label: 'Events',
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute<void>(
@@ -64,12 +68,61 @@ class SignedInHomeScreen extends StatelessWidget {
                     ),
                   );
                 },
-                icon: const Icon(Icons.event_note),
-                label: const Text('Events'),
+              ),
+              const SizedBox(height: 12),
+              _HomeActionButton(
+                icon: Icons.confirmation_number_outlined,
+                label: 'My Tickets',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) =>
+                          MyTicketsScreen(authToken: controller.session!.token),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _HomeActionButton(
+                icon: Icons.notifications_none,
+                label: 'Notifications',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => NotificationListScreen(
+                        authToken: controller.session!.token,
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _HomeActionButton extends StatelessWidget {
+  const _HomeActionButton({
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        label: Text(label),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 class EventItem {
   const EventItem({
     required this.id,
@@ -129,6 +131,46 @@ class EventFormInput {
       'status': status,
     };
   }
+
+  Map<String, String> toMultipartFields() {
+    final fields = {
+      'title': title,
+      'description': description,
+      'categoryId': categoryId,
+      'startAt': startAt.toUtc().toIso8601String(),
+      'endAt': endAt.toUtc().toIso8601String(),
+      'venueName': venueName,
+      'address': address,
+      'price': price.toString(),
+      'capacity': capacity.toString(),
+      'status': status,
+    };
+
+    final cityValue = city;
+    final countryValue = country;
+
+    if (cityValue != null) {
+      fields['city'] = cityValue;
+    }
+
+    if (countryValue != null) {
+      fields['country'] = countryValue;
+    }
+
+    return fields;
+  }
+}
+
+class EventImageUpload {
+  const EventImageUpload({
+    required this.bytes,
+    required this.fileName,
+    required this.mimeType,
+  });
+
+  final Uint8List bytes;
+  final String fileName;
+  final String mimeType;
 }
 
 class EventPagination {

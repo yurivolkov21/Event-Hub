@@ -15,7 +15,12 @@ Implemented Flutter foundation:
 - JWT and user summary are stored with `flutter_secure_storage`.
 - Saved sessions are restored through `GET /api/auth/me`.
 - Event list and detail screens are connected to the backend Events API.
-- Organizer create, edit, and delete event flows are implemented with JSON payloads.
+- Organizer create, edit, and delete event flows are implemented.
+- Event create/edit supports image picker and multipart upload.
+- Event detail supports bookmark toggle and booking creation.
+- Event detail supports inviting friends and native share sheet.
+- My Tickets screen is implemented.
+- Notification history screen is implemented.
 
 ## Suggested Folder Structure
 
@@ -57,12 +62,13 @@ dio
 go_router
 provider or flutter_bloc
 flutter_secure_storage
-image_picker
+image_picker: implemented
 cached_network_image
 firebase_core
 firebase_messaging
 http
 intl
+share_plus: implemented
 ```
 
 If using a simpler state approach for the course project, `provider` is enough.
@@ -84,8 +90,10 @@ Main:
 - Search
 - Filter
 - Event detail: implemented
+- Invite Friend: implemented as a bottom sheet from event detail
 - Map view
 - Notifications
+- Notifications: implemented
 - Profile
 
 Organizer:
@@ -98,7 +106,7 @@ Organizer:
 Booking:
 
 - Buy ticket confirmation
-- My tickets
+- My tickets: implemented
 
 ## Navigation
 

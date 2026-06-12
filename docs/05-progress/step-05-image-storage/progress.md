@@ -48,6 +48,14 @@ Upload event images to Cloudinary.
 - Updated `server/pnpm-lock.yaml`
 - Updated `server/pnpm-workspace.yaml`
 - Updated `server/tsconfig.json`
+- Updated `pubspec.yaml`
+- Updated `pubspec.lock`
+- Updated generated Flutter plugin files
+- Updated `lib/core/networking/api_client.dart`
+- Updated `lib/features/events/data/event_models.dart`
+- Updated `lib/features/events/data/event_repository.dart`
+- Updated `lib/features/events/presentation/event_form_screen.dart`
+- Updated `docs/03-flutter-app/flutter-plan.md`
 
 ## Verification
 
@@ -60,6 +68,12 @@ Upload event images to Cloudinary.
 - JSON `POST /api/events` still returned `201` after adding Multer middleware.
 - Multipart `POST /api/events` with non-image file returned `400`.
 - Test user and event were removed from local MongoDB after verification.
+- `flutter analyze` passed after Flutter image picker integration.
+- `flutter test` passed after Flutter image picker integration.
+- `flutter build web` passed after Flutter image picker integration.
+- `flutter build apk --debug` passed after Flutter image picker integration.
+- `pnpm typecheck` passed after Flutter image picker integration.
+- `pnpm build` passed after Flutter image picker integration.
 
 ## Notes
 
@@ -70,8 +84,12 @@ Upload event images to Cloudinary.
 - Event create/update now accepts multipart field `image`.
 - Event documents now store `imageUrl` and internal `imagePublicId`.
 - Replacing or deleting an event attempts to clean up the old Cloudinary image.
-- Flutter image picker and network image rendering are still pending.
+- Flutter event form now supports picking an image from gallery.
+- Flutter sends multipart `image` when creating or updating an event with a selected image.
+- Flutter validates selected image size before upload with the backend 5MB limit.
+- Event cards and detail screen render uploaded `imageUrl`.
+- Manual UI verification of real Cloudinary upload from Chrome/Android is still pending.
 
 ## Next Action
 
-Implement Flutter image picker and event image rendering when the Flutter UI layer is connected.
+Run manual upload verification from the app: create or edit an event with an image, confirm Cloudinary upload, then confirm list/detail render the returned `imageUrl`.

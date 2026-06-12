@@ -192,9 +192,36 @@ Create review body:
 ## Users
 
 ```text
-GET /api/users/:id
-PUT /api/users/me
-GET /api/users/:id/events
+GET /api/users
+```
+
+List users is protected and is currently used by the Invite Friend flow.
+
+Query params:
+
+```text
+search
+role
+limit
+```
+
+Response:
+
+```json
+{
+  "data": [
+    {
+      "id": "user-id",
+      "fullName": "Ashfak Sayem",
+      "email": "ashfak@example.com",
+      "role": "user",
+      "avatarUrl": null,
+      "phone": null,
+      "bio": null,
+      "interests": []
+    }
+  ]
+}
 ```
 
 ## Error Response
