@@ -9,6 +9,7 @@ class EventRepository {
 
   Future<PaginatedEvents> listEvents({
     String? search,
+    String? categoryId,
     int page = 1,
     int limit = 20,
   }) async {
@@ -18,6 +19,8 @@ class EventRepository {
         'page': '$page',
         'limit': '$limit',
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
+        if (categoryId != null && categoryId.trim().isNotEmpty)
+          'categoryId': categoryId.trim(),
       },
     );
 

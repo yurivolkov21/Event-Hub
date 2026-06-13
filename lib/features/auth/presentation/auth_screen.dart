@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/eventhub_theme.dart';
 import '../application/auth_controller.dart';
 
 enum AuthMode { signIn, signUp }
@@ -21,6 +22,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
   AuthMode _mode = AuthMode.signIn;
   String _role = 'user';
+  bool _passwordVisible = false;
 
   bool get _isSignUp => _mode == AuthMode.signUp;
 
@@ -53,64 +55,48 @@ class _AuthScreenState extends State<AuthScreen> {
     );
   }
 
+  void _switchMode() {
+    setState(() {
+      _mode = _isSignUp ? AuthMode.signIn : AuthMode.signUp;
+    });
+    widget.controller.clearError();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: AnimatedBuilder(
-                animation: widget.controller,
-                builder: (context, _) {
-                  return Form(
+        child: AnimatedBuilder(
+          animation: widget.controller,
+          builder: (context, _) {
+            return Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 30),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 430),
+                  child: Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Icon(
-                          Icons.event_available,
-                          size: 48,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(height: 12),
+                        const _EventHubLogo(),
+                        const SizedBox(height: 42),
                         Text(
-                          'EventHub',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
+                          _isSignUp ? 'Sign up' : 'Sign in',
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: EventHubTheme.ink,
+                              ),
                         ),
                         const SizedBox(height: 28),
-                        SegmentedButton<AuthMode>(
-                          segments: const [
-                            ButtonSegment(
-                              value: AuthMode.signIn,
-                              label: Text('Sign in'),
-                              icon: Icon(Icons.login),
-                            ),
-                            ButtonSegment(
-                              value: AuthMode.signUp,
-                              label: Text('Sign up'),
-                              icon: Icon(Icons.person_add),
-                            ),
-                          ],
-                          selected: {_mode},
-                          onSelectionChanged: (selection) {
-                            setState(() => _mode = selection.first);
-                            widget.controller.clearError();
-                          },
-                        ),
-                        const SizedBox(height: 20),
                         if (_isSignUp) ...[
                           TextFormField(
                             controller: _fullNameController,
                             textInputAction: TextInputAction.next,
                             decoration: const InputDecoration(
-                              labelText: 'Full name',
+                              hintText: 'Full name',
                               prefixIcon: Icon(Icons.badge_outlined),
-                              border: OutlineInputBorder(),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().length < 2) {
@@ -119,16 +105,15 @@ class _AuthScreenState extends State<AuthScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 16),
                         ],
                         TextFormField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           decoration: const InputDecoration(
-                            labelText: 'Email',
+                            hintText: 'abc@email.com',
                             prefixIcon: Icon(Icons.mail_outline),
-                            border: OutlineInputBorder(),
                           ),
                           validator: (value) {
                             final email = value?.trim() ?? '';
@@ -138,14 +123,28 @@ class _AuthScreenState extends State<AuthScreen> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 16),
                         TextFormField(
                           controller: _passwordController,
-                          obscureText: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Password',
-                            prefixIcon: Icon(Icons.lock_outline),
-                            border: OutlineInputBorder(),
+                          obscureText: !_passwordVisible,
+                          decoration: InputDecoration(
+                            hintText: 'Your password',
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              tooltip: _passwordVisible
+                                  ? 'Hide password'
+                                  : 'Show password',
+                              onPressed: () {
+                                setState(
+                                  () => _passwordVisible = !_passwordVisible,
+                                );
+                              },
+                              icon: Icon(
+                                _passwordVisible
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                              ),
+                            ),
                           ),
                           validator: (value) {
                             if (_isSignUp &&
@@ -160,7 +159,7 @@ class _AuthScreenState extends State<AuthScreen> {
                           },
                         ),
                         if (_isSignUp) ...[
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
                           SegmentedButton<String>(
                             segments: const [
                               ButtonSegment(
@@ -181,34 +180,129 @@ class _AuthScreenState extends State<AuthScreen> {
                           ),
                         ],
                         if (widget.controller.errorMessage != null) ...[
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 18),
                           Text(
                             widget.controller.errorMessage!,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.error,
+                              fontWeight: FontWeight.w700,
                             ),
                           ),
                         ],
-                        const SizedBox(height: 22),
-                        FilledButton.icon(
+                        const SizedBox(height: 30),
+                        FilledButton(
                           onPressed: widget.controller.isLoading
                               ? null
                               : _submit,
-                          icon: Icon(
-                            _isSignUp ? Icons.person_add : Icons.login,
+                          style: FilledButton.styleFrom(
+                            minimumSize: const Size.fromHeight(62),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
                           ),
-                          label: Text(_isSignUp ? 'Create account' : 'Sign in'),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(_isSignUp ? 'CREATE ACCOUNT' : 'SIGN IN'),
+                              const SizedBox(width: 18),
+                              Container(
+                                width: 42,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: EventHubTheme.primaryDark,
+                                  borderRadius: BorderRadius.circular(21),
+                                ),
+                                child: const Icon(Icons.arrow_forward),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 30),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              _isSignUp
+                                  ? 'Already have an account?'
+                                  : "Don't have an account?",
+                              style: Theme.of(context).textTheme.bodyLarge,
+                            ),
+                            TextButton(
+                              onPressed: widget.controller.isLoading
+                                  ? null
+                                  : _switchMode,
+                              child: Text(_isSignUp ? 'Sign in' : 'Sign up'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
+    );
+  }
+}
+
+class _EventHubLogo extends StatelessWidget {
+  const _EventHubLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: 92,
+          height: 92,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 92,
+                height: 92,
+                decoration: const BoxDecoration(
+                  color: EventHubTheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Container(
+                width: 50,
+                height: 50,
+                decoration: const BoxDecoration(
+                  color: EventHubTheme.background,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              Transform.rotate(
+                angle: -0.45,
+                child: Container(
+                  width: 66,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: EventHubTheme.accent,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'EventHub',
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            color: EventHubTheme.ink,
+          ),
+        ),
+      ],
     );
   }
 }

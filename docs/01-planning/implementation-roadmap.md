@@ -113,6 +113,19 @@ Deliverables:
 - Final README with demo accounts and API URL
 - Demo and grading checklist completed
 
+## Step 09 - UI Redesign From Figma
+
+Goal: make the Flutter app feel like the EventHub Figma design instead of a plain functional prototype.
+
+Deliverables:
+
+- EventHub visual theme
+- Figma-inspired auth shell
+- Figma-inspired home/event list
+- Figma-inspired event detail
+- Better event cards, category chips, empty states, and primary actions
+- Preserve existing backend flows while improving visual quality
+
 ## Suggested Order
 
 1. Backend foundation
@@ -124,6 +137,7 @@ Deliverables:
 7. Booking and bookmarks
 8. FCM notifications
 9. Deploy and final polish
+10. UI redesign from Figma
 
 ## Scoring Checklist
 

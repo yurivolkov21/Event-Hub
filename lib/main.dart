@@ -3,6 +3,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import 'core/theme/eventhub_theme.dart';
 import 'features/auth/application/auth_controller.dart';
 import 'features/auth/presentation/auth_screen.dart';
 import 'features/auth/presentation/signed_in_home_screen.dart';
@@ -65,10 +66,7 @@ class _EventHubAppState extends State<EventHubApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'EventHub',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4F46E5)),
-        useMaterial3: true,
-      ),
+      theme: EventHubTheme.light(),
       home: AuthGate(controller: _authController),
     );
   }

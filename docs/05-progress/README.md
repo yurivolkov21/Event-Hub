@@ -12,6 +12,7 @@ This folder tracks implementation progress by step.
 - [Step 06 - Booking And Social](step-06-booking-social/progress.md)
 - [Step 07 - FCM Notifications](step-07-fcm-notifications/progress.md)
 - [Step 08 - Testing And Deploy](step-08-testing-deploy/progress.md)
+- [Step 09 - UI Redesign From Figma](step-09-ui-redesign/progress.md)
 
 ## Status Legend
 

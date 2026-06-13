@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/networking/api_client.dart';
+import '../../../core/theme/eventhub_theme.dart';
 import '../../bookings/data/booking_repository.dart';
 import '../../bookmarks/data/bookmark_repository.dart';
 import '../../invitations/presentation/invite_friends_sheet.dart';
@@ -98,33 +99,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             event.organizerId == widget.currentUserId);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(event?.title ?? 'Event'),
-        actions: [
-          if (canManage) ...[
-            IconButton(
-              tooltip: 'Edit',
-              onPressed: () => _openEditEvent(event),
-              icon: const Icon(Icons.edit),
-            ),
-            IconButton(
-              tooltip: 'Delete',
-              onPressed: () => _confirmDelete(event),
-              icon: const Icon(Icons.delete_outline),
-            ),
-          ],
-          if (event != null)
-            IconButton(
-              tooltip: _isBookmarked ? 'Remove bookmark' : 'Bookmark',
-              onPressed: _isBookmarkLoading
-                  ? null
-                  : () => _toggleBookmark(event),
-              icon: Icon(
-                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-              ),
-            ),
-        ],
-      ),
       body: switch ((_isLoading, _errorMessage, event)) {
         (true, _, _) => const Center(child: CircularProgressIndicator()),
         (false, final message?, _) => _EventErrorState(
@@ -133,13 +107,25 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         (false, _, final loadedEvent?) => _EventDetailContent(
           event: loadedEvent,
-          isBooking: _isBooking,
-          onBook: () => _bookEvent(loadedEvent),
+          isBookmarked: _isBookmarked,
+          isBookmarkLoading: _isBookmarkLoading,
+          canManage: canManage,
+          onBack: () => Navigator.of(context).pop(),
           onInvite: () => _openInviteFriends(loadedEvent),
           onShare: () => _shareEvent(loadedEvent),
+          onBookmark: () => _toggleBookmark(loadedEvent),
+          onEdit: () => _openEditEvent(loadedEvent),
+          onDelete: () => _confirmDelete(loadedEvent),
         ),
         _ => const SizedBox.shrink(),
       },
+      bottomNavigationBar: event == null || _errorMessage != null || _isLoading
+          ? null
+          : _BookingBar(
+              event: event,
+              isBooking: _isBooking,
+              onBook: () => _bookEvent(event),
+            ),
     );
   }
 
@@ -359,106 +345,352 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 class _EventDetailContent extends StatelessWidget {
   const _EventDetailContent({
     required this.event,
-    required this.isBooking,
-    required this.onBook,
+    required this.isBookmarked,
+    required this.isBookmarkLoading,
+    required this.canManage,
+    required this.onBack,
     required this.onInvite,
     required this.onShare,
+    required this.onBookmark,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   final EventItem event;
-  final bool isBooking;
-  final VoidCallback onBook;
+  final bool isBookmarked;
+  final bool isBookmarkLoading;
+  final bool canManage;
+  final VoidCallback onBack;
   final VoidCallback onInvite;
   final VoidCallback onShare;
+  final VoidCallback onBookmark;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        EventImage(imageUrl: event.imageUrl, height: 260),
+        _DetailHero(
+          event: event,
+          isBookmarked: isBookmarked,
+          isBookmarkLoading: isBookmarkLoading,
+          onBack: onBack,
+          onBookmark: onBookmark,
+          onShare: onShare,
+          onInvite: onInvite,
+        ),
         Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 132),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Chip(
-                    label: Text(
-                      event.isFree
-                          ? 'Free'
-                          : '\$${event.price.toStringAsFixed(0)}',
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Chip(label: Text(event.status)),
-                ],
+              Text(
+                event.title,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: EventHubTheme.ink,
+                  fontWeight: FontWeight.w800,
+                  height: 1.12,
+                ),
+              ),
+              const SizedBox(height: 24),
+              _InfoRow(
+                icon: Icons.calendar_month,
+                title: _formatLongDate(event.startAt),
+                subtitle: _formatTimeRange(event.startAt, event.endAt),
+              ),
+              const SizedBox(height: 18),
+              _InfoRow(
+                icon: Icons.location_on,
+                title: event.venueName,
+                subtitle: event.address,
+              ),
+              const SizedBox(height: 18),
+              _OrganizerRow(event: event),
+              const SizedBox(height: 30),
+              Text(
+                'About Event',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 12),
               Text(
-                event.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
+                event.description,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: EventHubTheme.muted,
+                  height: 1.58,
                 ),
               ),
-              const SizedBox(height: 16),
-              _DetailRow(
-                icon: Icons.schedule,
-                label: _formatDateTime(event.startAt),
-              ),
-              const SizedBox(height: 10),
-              _DetailRow(
-                icon: Icons.location_on_outlined,
-                label: '${event.venueName}, ${event.address}',
-              ),
-              const SizedBox(height: 10),
-              _DetailRow(
-                icon: Icons.confirmation_number_outlined,
-                label:
-                    '${event.remainingTickets.clamp(0, event.capacity)} tickets left',
-              ),
-              const SizedBox(height: 24),
-              Divider(color: colorScheme.outlineVariant),
-              const SizedBox(height: 20),
-              Text(
-                event.description,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(height: 1.45),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 26),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: event.status == 'published' ? onInvite : null,
-                      icon: const Icon(Icons.person_add_alt_1),
-                      label: const Text('Invite'),
+                    child: _MetricPill(
+                      icon: Icons.confirmation_number_outlined,
+                      label:
+                          '${event.remainingTickets.clamp(0, event.capacity)} left',
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: onShare,
-                      icon: const Icon(Icons.ios_share),
-                      label: const Text('Share'),
+                    child: _MetricPill(
+                      icon: event.isFree ? Icons.money_off : Icons.sell,
+                      label: event.isFree
+                          ? 'Free'
+                          : '\$${event.price.toStringAsFixed(0)}',
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: isBooking || event.status != 'published'
-                      ? null
-                      : onBook,
-                  icon: const Icon(Icons.confirmation_number_outlined),
-                  label: Text(isBooking ? 'Booking...' : 'Book Ticket'),
+              if (canManage) ...[
+                const SizedBox(height: 18),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Edit'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: onDelete,
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Delete'),
+                      ),
+                    ),
+                  ],
                 ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailHero extends StatelessWidget {
+  const _DetailHero({
+    required this.event,
+    required this.isBookmarked,
+    required this.isBookmarkLoading,
+    required this.onBack,
+    required this.onBookmark,
+    required this.onShare,
+    required this.onInvite,
+  });
+
+  final EventItem event;
+  final bool isBookmarked;
+  final bool isBookmarkLoading;
+  final VoidCallback onBack;
+  final VoidCallback onBookmark;
+  final VoidCallback onShare;
+  final VoidCallback onInvite;
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+
+    return SizedBox(
+      height: 398,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          EventImage(imageUrl: event.imageUrl, height: 342),
+          Positioned.fill(
+            bottom: 56,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.18),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            top: topPadding + 12,
+            child: Row(
+              children: [
+                IconButton.filled(
+                  tooltip: 'Back',
+                  onPressed: onBack,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.24),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Event Details',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton.filled(
+                  tooltip: 'Share',
+                  onPressed: onShare,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.black.withValues(alpha: 0.24),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: const Icon(Icons.ios_share),
+                ),
+                const SizedBox(width: 8),
+                IconButton.filled(
+                  tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
+                  onPressed: isBookmarkLoading ? null : onBookmark,
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.white.withValues(alpha: 0.25),
+                    foregroundColor: Colors.white,
+                  ),
+                  icon: Icon(
+                    isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            left: 32,
+            right: 32,
+            bottom: 0,
+            child: _GoingPill(
+              goingCount: event.bookedCount + 20,
+              onInvite: event.status == 'published' ? onInvite : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoingPill extends StatelessWidget {
+  const _GoingPill({required this.goingCount, required this.onInvite});
+
+  final int goingCount;
+  final VoidCallback? onInvite;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 14,
+      shadowColor: const Color(0x1F6F73A8),
+      borderRadius: BorderRadius.circular(36),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        child: Row(
+          children: [
+            const _HeroAvatar(color: Color(0xFFFF8BA7), label: 'A'),
+            const _HeroAvatar(color: Color(0xFFFFC1A6), label: 'S'),
+            const _HeroAvatar(color: Color(0xFF75C7F0), label: 'J'),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                '+$goingCount Going',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: EventHubTheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            FilledButton(
+              onPressed: onInvite,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(94, 48),
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: const Text('Invite'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroAvatar extends StatelessWidget {
+  const _HeroAvatar({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      widthFactor: 0.7,
+      child: CircleAvatar(
+        radius: 23,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor: color,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: EventHubTheme.softBlue,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Icon(icon, color: EventHubTheme.primary, size: 29),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: EventHubTheme.muted),
               ),
             ],
           ),
@@ -468,21 +700,147 @@ class _EventDetailContent extends StatelessWidget {
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  const _DetailRow({required this.icon, required this.label});
+class _OrganizerRow extends StatelessWidget {
+  const _OrganizerRow({required this.event});
+
+  final EventItem event;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 58,
+          height: 58,
+          decoration: BoxDecoration(
+            color: EventHubTheme.coral,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(Icons.person, color: Colors.white, size: 30),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'EventHub Organizer',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                event.status,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: EventHubTheme.muted),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: EventHubTheme.softBlue,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: const Text(
+            'Organizer',
+            style: TextStyle(
+              color: EventHubTheme.primary,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetricPill extends StatelessWidget {
+  const _MetricPill({required this.icon, required this.label});
 
   final IconData icon;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 10),
-        Expanded(child: Text(label)),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFECEEFF)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: EventHubTheme.primary, size: 18),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: EventHubTheme.ink,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BookingBar extends StatelessWidget {
+  const _BookingBar({
+    required this.event,
+    required this.isBooking,
+    required this.onBook,
+  });
+
+  final EventItem event;
+  final bool isBooking;
+  final VoidCallback onBook;
+
+  @override
+  Widget build(BuildContext context) {
+    final canBook = event.status == 'published' && !isBooking;
+
+    return SafeArea(
+      minimum: const EdgeInsets.fromLTRB(24, 12, 24, 18),
+      child: FilledButton(
+        onPressed: canBook ? onBook : null,
+        style: FilledButton.styleFrom(
+          minimumSize: const Size.fromHeight(64),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              isBooking
+                  ? 'BOOKING...'
+                  : event.isFree
+                  ? 'BOOK TICKET'
+                  : 'BUY TICKET \$${event.price.toStringAsFixed(0)}',
+            ),
+            const SizedBox(width: 18),
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: EventHubTheme.primaryDark,
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Icon(Icons.arrow_forward, color: Colors.white),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -529,4 +887,57 @@ String _formatDateTime(DateTime value) {
   final minute = local.minute.toString().padLeft(2, '0');
 
   return '$day/$month/${local.year} $hour:$minute';
+}
+
+String _formatLongDate(DateTime value) {
+  final local = value.toLocal();
+
+  return '${local.day} ${_monthName(local.month)}, ${local.year}';
+}
+
+String _formatTimeRange(DateTime start, DateTime end) {
+  final localStart = start.toLocal();
+  final localEnd = end.toLocal();
+
+  return '${_weekdayName(localStart.weekday)}, ${_formatClock(localStart)} - ${_formatClock(localEnd)}';
+}
+
+String _formatClock(DateTime value) {
+  final hour = value.hour.toString().padLeft(2, '0');
+  final minute = value.minute.toString().padLeft(2, '0');
+
+  return '$hour:$minute';
+}
+
+String _weekdayName(int weekday) {
+  const weekdays = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
+  return weekdays[weekday - 1];
+}
+
+String _monthName(int month) {
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+
+  return months[month - 1];
 }

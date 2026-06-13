@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/networking/api_client.dart';
+import '../../../core/theme/eventhub_theme.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'event_detail_screen.dart';
@@ -31,6 +32,7 @@ class _EventListScreenState extends State<EventListScreen> {
 
   List<EventItem> _events = [];
   String? _errorMessage;
+  String? _selectedCategoryId;
   bool _isLoading = true;
 
   @override
@@ -55,6 +57,7 @@ class _EventListScreenState extends State<EventListScreen> {
     try {
       final response = await _eventRepository.listEvents(
         search: _searchController.text,
+        categoryId: _selectedCategoryId,
       );
       setState(() => _events = response.data);
     } on ApiException catch (error) {
@@ -66,6 +69,11 @@ class _EventListScreenState extends State<EventListScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  void _selectCategory(String? categoryId) {
+    setState(() => _selectedCategoryId = categoryId);
+    _loadEvents();
   }
 
   void _openEvent(EventItem event) {
@@ -106,16 +114,6 @@ class _EventListScreenState extends State<EventListScreen> {
         widget.currentUserRole == 'admin';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Events'),
-        actions: [
-          IconButton(
-            tooltip: 'Refresh',
-            onPressed: _loadEvents,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
       floatingActionButton: canCreate
           ? FloatingActionButton(
               tooltip: 'Create event',
@@ -126,49 +124,77 @@ class _EventListScreenState extends State<EventListScreen> {
       body: RefreshIndicator(
         onRefresh: _loadEvents,
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: EdgeInsets.zero,
           children: [
-            SearchBar(
-              controller: _searchController,
-              leading: const Icon(Icons.search),
-              hintText: 'Search events',
-              onSubmitted: (_) => _loadEvents(),
-              trailing: [
-                IconButton(
-                  tooltip: 'Search',
-                  onPressed: _loadEvents,
-                  icon: const Icon(Icons.arrow_forward),
-                ),
-              ],
+            _ExploreHeader(
+              searchController: _searchController,
+              selectedCategoryId: _selectedCategoryId,
+              onSearch: _loadEvents,
+              onCategorySelected: _selectCategory,
             ),
-            const SizedBox(height: 16),
-            if (_isLoading)
-              const Padding(
-                padding: EdgeInsets.only(top: 96),
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_errorMessage != null)
-              _EventListMessage(
-                icon: Icons.error_outline,
-                message: _errorMessage!,
-                onRetry: _loadEvents,
-              )
-            else if (_events.isEmpty)
-              _EventListMessage(
-                icon: Icons.event_busy,
-                message: 'No events yet',
-                onRetry: _loadEvents,
-              )
-            else
-              ..._events.map(
-                (event) => Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _EventCard(
-                    event: event,
-                    onTap: () => _openEvent(event),
-                  ),
-                ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 22, 24, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SectionHeader(title: 'Upcoming Events', onTap: _loadEvents),
+                  const SizedBox(height: 16),
+                  if (_isLoading)
+                    const _EventListLoading()
+                  else if (_errorMessage != null)
+                    _EventListMessage(
+                      icon: Icons.error_outline,
+                      message: _errorMessage!,
+                      onRetry: _loadEvents,
+                    )
+                  else if (_events.isEmpty)
+                    _EventListMessage(
+                      icon: Icons.event_busy,
+                      message: 'No events yet',
+                      onRetry: _loadEvents,
+                    )
+                  else ...[
+                    SizedBox(
+                      height: 368,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _events.length,
+                        separatorBuilder: (_, _) => const SizedBox(width: 18),
+                        itemBuilder: (context, index) {
+                          final event = _events[index];
+
+                          return SizedBox(
+                            width: 292,
+                            child: _FeaturedEventCard(
+                              event: event,
+                              onTap: () => _openEvent(event),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    _InviteBanner(
+                      onTap: _events.isEmpty
+                          ? null
+                          : () => _openEvent(_events.first),
+                    ),
+                    const SizedBox(height: 28),
+                    _SectionHeader(title: 'Nearby You', onTap: _loadEvents),
+                    const SizedBox(height: 14),
+                    ..._events.map(
+                      (event) => Padding(
+                        padding: const EdgeInsets.only(bottom: 14),
+                        child: _CompactEventTile(
+                          event: event,
+                          onTap: () => _openEvent(event),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
+            ),
           ],
         ),
       ),
@@ -176,91 +202,535 @@ class _EventListScreenState extends State<EventListScreen> {
   }
 }
 
-class _EventCard extends StatelessWidget {
-  const _EventCard({required this.event, required this.onTap});
+class _ExploreHeader extends StatelessWidget {
+  const _ExploreHeader({
+    required this.searchController,
+    required this.selectedCategoryId,
+    required this.onSearch,
+    required this.onCategorySelected,
+  });
+
+  final TextEditingController searchController;
+  final String? selectedCategoryId;
+  final VoidCallback onSearch;
+  final ValueChanged<String?> onCategorySelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: EventHubTheme.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(36)),
+      ),
+      padding: EdgeInsets.fromLTRB(20, topPadding + 14, 20, 24),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              IconButton.filled(
+                tooltip: 'Back',
+                onPressed: () => Navigator.of(context).maybePop(),
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.arrow_back),
+              ),
+              const Spacer(),
+              Column(
+                children: [
+                  Text(
+                    'Current Location',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'EventHub, Android',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              IconButton.filled(
+                tooltip: 'Refresh',
+                onPressed: onSearch,
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.18),
+                  foregroundColor: Colors.white,
+                ),
+                icon: const Icon(Icons.notifications_none),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: searchController,
+                  onSubmitted: (_) => onSearch(),
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    prefixIcon: const Icon(Icons.search, color: Colors.white),
+                    suffixIcon: IconButton(
+                      tooltip: 'Search',
+                      onPressed: onSearch,
+                      icon: const Icon(
+                        Icons.arrow_forward,
+                        color: Colors.white,
+                      ),
+                    ),
+                    filled: false,
+                    border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton.icon(
+                onPressed: onSearch,
+                icon: const Icon(Icons.tune, size: 18),
+                label: const Text('Filters'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: Colors.white.withValues(alpha: 0.16),
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size(0, 48),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 54,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _CategoryPill(
+                  label: 'All',
+                  icon: Icons.apps,
+                  color: EventHubTheme.primaryDark,
+                  selected: selectedCategoryId == null,
+                  onTap: () => onCategorySelected(null),
+                ),
+                ...eventCategoryOptions.map((category) {
+                  final style = _categoryStyle(category.name);
+
+                  return _CategoryPill(
+                    label: category.name,
+                    icon: style.icon,
+                    color: style.color,
+                    selected: selectedCategoryId == category.id,
+                    onTap: () => onCategorySelected(category.id),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryPill extends StatelessWidget {
+  const _CategoryPill({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 12),
+      child: ActionChip(
+        onPressed: onTap,
+        avatar: Icon(icon, color: Colors.white, size: 20),
+        label: Text(label),
+        labelStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w800,
+        ),
+        backgroundColor: selected ? color : color.withValues(alpha: 0.86),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        side: BorderSide(
+          color: selected ? Colors.white : Colors.transparent,
+          width: 1.4,
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title, required this.onTap});
+
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(title, style: Theme.of(context).textTheme.headlineSmall),
+        ),
+        TextButton.icon(
+          onPressed: onTap,
+          iconAlignment: IconAlignment.end,
+          icon: const Icon(Icons.play_arrow, size: 18),
+          label: const Text('See All'),
+        ),
+      ],
+    );
+  }
+}
+
+class _FeaturedEventCard extends StatelessWidget {
+  const _FeaturedEventCard({required this.event, required this.onTap});
 
   final EventItem event;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
-      margin: EdgeInsets.zero,
+    return Material(
+      color: Colors.white,
+      elevation: 12,
+      shadowColor: const Color(0x146F73A8),
+      borderRadius: BorderRadius.circular(24),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: InkWell(
         onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            EventImage(imageUrl: event.imageUrl),
-            Padding(
-              padding: const EdgeInsets.all(14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Stack(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          event.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleMedium
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        event.isFree
-                            ? 'Free'
-                            : '\$${event.price.toStringAsFixed(0)}',
-                        style: TextStyle(
-                          color: colorScheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: EventImage(imageUrl: event.imageUrl, height: 174),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    event.venueName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: _DateBadge(date: event.startAt),
+                  ),
+                  Positioned(
+                    right: 12,
+                    top: 12,
+                    child: IconButton.filled(
+                      tooltip: 'Open event',
+                      onPressed: onTap,
+                      style: IconButton.styleFrom(
+                        backgroundColor: Colors.white.withValues(alpha: 0.9),
+                        foregroundColor: EventHubTheme.coral,
+                      ),
+                      icon: const Icon(Icons.bookmark),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.schedule,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(_formatDate(event.startAt)),
-                      const Spacer(),
-                      Icon(
-                        Icons.confirmation_number_outlined,
-                        size: 16,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${event.remainingTickets.clamp(0, event.capacity)}',
-                      ),
-                    ],
                   ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(height: 14),
+              Text(
+                event.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const _MiniAvatar(color: Color(0xFFFF8BA7), label: 'A'),
+                  const _MiniAvatar(color: Color(0xFFFFC1A6), label: 'S'),
+                  const _MiniAvatar(color: Color(0xFF75C7F0), label: 'J'),
+                  const SizedBox(width: 8),
+                  Text(
+                    '+${event.bookedCount + 20} Going',
+                    style: const TextStyle(
+                      color: EventHubTheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  const Icon(
+                    Icons.location_on,
+                    color: EventHubTheme.muted,
+                    size: 18,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      '${event.venueName}, ${event.address}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _CompactEventTile extends StatelessWidget {
+  const _CompactEventTile({required this.event, required this.onTap});
+
+  final EventItem event;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 6,
+      shadowColor: const Color(0x106F73A8),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 90,
+                  height: 88,
+                  child: EventImage(imageUrl: event.imageUrl, height: 88),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _formatDateTime(event.startAt),
+                      style: const TextStyle(
+                        color: EventHubTheme.primary,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      event.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.location_on,
+                          color: EventHubTheme.muted,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            event.venueName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: EventHubTheme.muted),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InviteBanner extends StatelessWidget {
+  const _InviteBanner({required this.onTap});
+
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: const Color(0xFFD8FAFA),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Invite your friends',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Share moments together',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: EventHubTheme.muted),
+                ),
+                const SizedBox(height: 18),
+                FilledButton(
+                  onPressed: onTap,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: EventHubTheme.accent,
+                    minimumSize: const Size(132, 48),
+                  ),
+                  child: const Text('INVITE'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            width: 86,
+            height: 86,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.7),
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: const Icon(
+              Icons.card_giftcard,
+              color: EventHubTheme.primary,
+              size: 42,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateBadge extends StatelessWidget {
+  const _DateBadge({required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    final local = date.toLocal();
+
+    return Container(
+      width: 58,
+      height: 70,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            local.day.toString().padLeft(2, '0'),
+            style: const TextStyle(
+              color: EventHubTheme.coral,
+              fontSize: 21,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          Text(
+            _monthShort(local.month).toUpperCase(),
+            style: const TextStyle(
+              color: EventHubTheme.coral,
+              fontWeight: FontWeight.w900,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniAvatar extends StatelessWidget {
+  const _MiniAvatar({required this.color, required this.label});
+
+  final Color color;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Align(
+      widthFactor: 0.72,
+      child: CircleAvatar(
+        radius: 15,
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: 13,
+          backgroundColor: color,
+          child: Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EventListLoading extends StatelessWidget {
+  const _EventListLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 72, bottom: 72),
+      child: Center(child: CircularProgressIndicator()),
     );
   }
 }
@@ -279,17 +749,13 @@ class _EventListMessage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 96),
+      padding: const EdgeInsets.only(top: 72, bottom: 72),
       child: Center(
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 40,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            Icon(icon, size: 42, color: EventHubTheme.primary),
             const SizedBox(height: 12),
-            Text(message),
+            Text(message, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 16),
             OutlinedButton.icon(
               onPressed: onRetry,
@@ -303,10 +769,83 @@ class _EventListMessage extends StatelessWidget {
   }
 }
 
-String _formatDate(DateTime value) {
+class _CategoryStyle {
+  const _CategoryStyle({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+}
+
+_CategoryStyle _categoryStyle(String categoryName) {
+  switch (categoryName.toLowerCase()) {
+    case 'sports':
+      return const _CategoryStyle(
+        icon: Icons.sports_basketball,
+        color: EventHubTheme.coral,
+      );
+    case 'music':
+      return const _CategoryStyle(
+        icon: Icons.music_note,
+        color: EventHubTheme.orange,
+      );
+    case 'food':
+      return const _CategoryStyle(
+        icon: Icons.restaurant,
+        color: EventHubTheme.green,
+      );
+    case 'art':
+      return const _CategoryStyle(
+        icon: Icons.brush_outlined,
+        color: Color(0xFF7D6BFF),
+      );
+    case 'movie':
+      return const _CategoryStyle(
+        icon: Icons.movie_outlined,
+        color: Color(0xFF4AC7EC),
+      );
+    case 'concert':
+      return const _CategoryStyle(
+        icon: Icons.mic_external_on_outlined,
+        color: Color(0xFFFF6A8D),
+      );
+    case 'games online':
+      return const _CategoryStyle(
+        icon: Icons.sports_esports_outlined,
+        color: Color(0xFF2EC9A6),
+      );
+    default:
+      return const _CategoryStyle(
+        icon: Icons.category_outlined,
+        color: EventHubTheme.primary,
+      );
+  }
+}
+
+String _formatDateTime(DateTime value) {
   final local = value.toLocal();
   final day = local.day.toString().padLeft(2, '0');
-  final month = local.month.toString().padLeft(2, '0');
+  final month = _monthShort(local.month);
+  final hour = local.hour.toString().padLeft(2, '0');
+  final minute = local.minute.toString().padLeft(2, '0');
 
-  return '$day/$month/${local.year}';
+  return '$day $month, $hour:$minute';
+}
+
+String _monthShort(int month) {
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+
+  return months[month - 1];
 }
