@@ -49,10 +49,10 @@ Role: user
 
 ## Required Requirements
 
-- Server backend and database: not verified yet
-- CRUD on Android: not verified yet
-- Authentication: not verified yet
-- Push notification with FCM: not verified yet
+- Server backend and database: ready for manual verification
+- CRUD on Android: ready for manual verification
+- Authentication: ready for manual verification
+- Push notification with FCM: ready for manual verification
 
 ## Bonus Checklist
 
@@ -62,7 +62,7 @@ Role: user
 - Pagination or load more
 - Bookmark events
 - Deploy backend
-- Basic test
+- Basic test: implemented with `server/tests/app.test.js`
 - CI/CD build APK
 
 ## Final Submission Items

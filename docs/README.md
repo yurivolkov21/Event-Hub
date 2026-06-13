@@ -32,6 +32,7 @@ This folder stores the planning notes, architecture decisions, and step-by-step 
 - [Flutter App Plan](03-flutter-app/flutter-plan.md)
 - [Backend Plan](04-backend-server/backend-plan.md)
 - [Progress Tracker](05-progress/README.md)
+- [Testing And Deploy Guide](06-deployment/testing-and-deploy.md)
 
 ## Progress Rules
 
