@@ -5,10 +5,12 @@ services:
     rootDir: server
     plan: free
     autoDeploy: true
-    buildCommand: corepack enable && corepack prepare pnpm@11.4.0 --activate && pnpm install --frozen-lockfile && pnpm build
-    startCommand: pnpm start
+    buildCommand: npx --yes pnpm@11.4.0 install --frozen-lockfile --prod=false && npx --yes pnpm@11.4.0 run build
+    startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
+      - key: NODE_VERSION
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: JWT_SECRET
