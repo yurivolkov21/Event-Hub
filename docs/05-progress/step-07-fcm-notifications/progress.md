@@ -85,6 +85,12 @@ Implement Firebase Cloud Messaging push notifications.
 - Flutter notification history screen is implemented.
 - Flutter can mark notifications as read.
 
+## Phase A QA - 2026-06-20
+
+- API-level smoke test confirmed `POST /api/notifications/register-token` returns 201 and `GET /api/notifications` returns history records created by booking and invitation.
+- Confirmed notification history is still saved when push delivery uses a fake/unregistered token and fails.
+- Still pending: real Android emulator/device FCM token registration through the app, and real push delivery to a device.
+
 ## Next Action
 
 Manual test notification history from app, then run Android emulator/device FCM token and real push delivery verification.

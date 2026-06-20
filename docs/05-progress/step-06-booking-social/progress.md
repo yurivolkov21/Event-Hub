@@ -124,6 +124,12 @@ Add booking, bookmark, invitation, and social features from the EventHub design.
 - Bookmark creation is idempotent through a unique `userId + eventId` index.
 - `flutter build apk --debug` currently passes with a `share_plus` Kotlin Gradle Plugin future-compatibility warning. It does not block the debug build.
 
+## Phase A QA - 2026-06-20
+
+- Ran an API-level smoke test of the full demo flow against the local server and MongoDB: 25/25 checks passed.
+- Verified: booking create returns 201, `GET /api/bookings/me` lists it, event `bookedCount` goes 0 -> 1 on booking and 1 -> 0 on cancel, bookmark create/list, invitation create/list, and notification history records are created.
+- Still pending: visual/emulator QA of My Tickets, bookmark button, invite friend sheet, and share flow.
+
 ## Next Action
 
 Manual test booking, bookmark, invite friend, share, notifications, and FCM on Android emulator with the local backend.

@@ -1,6 +1,6 @@
 # Step 08 - Testing And Deploy
 
-Status: In progress
+Status: Done (backend deployed; APK + demo accounts pending)
 
 ## Goal
 
@@ -53,6 +53,15 @@ Prepare the project for demo, grading, and final submission.
 - Demo accounts should be created manually through the app before final submission.
 - `flutter build apk --debug` currently passes with a `share_plus` Kotlin Gradle Plugin future-compatibility warning. It does not block the debug build.
 
+## Phase B Deploy - 2026-06-20
+
+- MongoDB Atlas free cluster created and connected (database `eventhub`); connection verified from local with ping OK.
+- Backend deployed to Render as a Blueprint web service: https://eventhub-api-b4yb.onrender.com
+- Production health check returns `status: ok` with the database connected to the Atlas host.
+- Fixed the Render build: replaced `corepack enable` (failed with EROFS on Render's read-only `/usr/bin`) with `npx --yes pnpm@11.4.0 ...`, changed the start command to `node dist/server.js`, and pinned `NODE_VERSION` to 22.
+- Ran the full demo-flow smoke test against the live URL + Atlas: 25/25 checks passed.
+- Smoke-test data was removed from Atlas after verification.
+
 ## Next Action
 
-Manual QA from local backend and Android emulator, then deploy to Render with MongoDB Atlas if a public demo URL is required.
+Build the demo APK against the deployed API (`flutter build apk --debug --dart-define=API_BASE_URL=https://eventhub-api-b4yb.onrender.com/api`), create the organizer/user demo accounts through the app, and record them in the demo-grading checklist.

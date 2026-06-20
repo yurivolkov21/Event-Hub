@@ -90,6 +90,12 @@ Upload event images to Cloudinary.
 - Event cards and detail screen render uploaded `imageUrl`.
 - Manual UI verification of real Cloudinary upload from Chrome/Android is still pending.
 
+## Phase A QA - 2026-06-20
+
+- Confirmed all 13 backend env vars load, including `CLOUDINARY_API_SECRET`. (An earlier "missing secret" note was a false alarm caused by a parsing bug while masking the multi-line `FIREBASE_PRIVATE_KEY`.)
+- Verified Cloudinary credentials end-to-end: a real test image uploaded to `res.cloudinary.com` and was deleted successfully, so the backend image-storage path works with the current `.env`.
+- Still pending: visual confirmation that picking an image in the app uploads it and that event cards/detail render the returned `imageUrl`.
+
 ## Next Action
 
 Run manual upload verification from the app: create or edit an event with an image, confirm Cloudinary upload, then confirm list/detail render the returned `imageUrl`.
