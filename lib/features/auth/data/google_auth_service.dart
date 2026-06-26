@@ -10,9 +10,12 @@ import '../../../core/config/app_config.dart';
 /// app JWT.
 class GoogleAuthService {
   GoogleAuthService({FirebaseAuth? firebaseAuth})
-    : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+    : _injectedAuth = firebaseAuth;
 
-  final FirebaseAuth _firebaseAuth;
+  // Resolved lazily so constructing this service never touches
+  // FirebaseAuth.instance before Firebase is initialized (e.g. in widget tests).
+  final FirebaseAuth? _injectedAuth;
+  FirebaseAuth get _firebaseAuth => _injectedAuth ?? FirebaseAuth.instance;
   bool _initialized = false;
 
   Future<void> _ensureInitialized() async {

@@ -8,6 +8,9 @@ import 'features/auth/application/auth_controller.dart';
 import 'features/auth/presentation/auth_screen.dart';
 import 'features/auth/presentation/signed_in_home_screen.dart';
 import 'features/notifications/fcm_notification_service.dart';
+import 'features/onboarding/data/onboarding_storage.dart';
+import 'features/onboarding/presentation/onboarding_screen.dart';
+import 'features/onboarding/presentation/splash_screen.dart';
 
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
@@ -93,6 +96,10 @@ class EventHubApp extends StatefulWidget {
 
 class _EventHubAppState extends State<EventHubApp> {
   late final AuthController _authController;
+  final OnboardingStorage _onboardingStorage = OnboardingStorage();
+
+  bool _booting = true;
+  bool _showOnboarding = false;
 
   @override
   void initState() {
@@ -106,6 +113,31 @@ class _EventHubAppState extends State<EventHubApp> {
     if (widget.restoreSession) {
       Future.microtask(_authController.restoreSession);
     }
+
+    Future.microtask(_boot);
+  }
+
+  Future<void> _boot() async {
+    final completed = await _onboardingStorage.isCompleted();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _showOnboarding = !completed;
+      _booting = false;
+    });
+  }
+
+  Future<void> _completeOnboarding() async {
+    await _onboardingStorage.setCompleted();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() => _showOnboarding = false);
   }
 
   @override
@@ -121,33 +153,24 @@ class _EventHubAppState extends State<EventHubApp> {
       debugShowCheckedModeBanner: false,
       title: 'EventHub',
       theme: EventHubTheme.light(),
-      home: AuthGate(controller: _authController),
-    );
-  }
-}
+      home: AnimatedBuilder(
+        animation: _authController,
+        builder: (context, _) {
+          if (_booting || _authController.isLoading) {
+            return const SplashScreen();
+          }
 
-class AuthGate extends StatelessWidget {
-  const AuthGate({required this.controller, super.key});
+          if (_showOnboarding) {
+            return OnboardingScreen(onCompleted: _completeOnboarding);
+          }
 
-  final AuthController controller;
+          if (_authController.isAuthenticated) {
+            return SignedInHomeScreen(controller: _authController);
+          }
 
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        if (controller.isLoading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (controller.isAuthenticated) {
-          return SignedInHomeScreen(controller: controller);
-        }
-
-        return AuthScreen(controller: controller);
-      },
+          return AuthScreen(controller: _authController);
+        },
+      ),
     );
   }
 }
