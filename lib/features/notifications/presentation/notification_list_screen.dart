@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../core/networking/api_client.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../events/presentation/event_detail_screen.dart';
 import '../data/notification_models.dart';
 import '../data/notification_repository.dart';
 
 class NotificationListScreen extends StatefulWidget {
   const NotificationListScreen({
     required this.authToken,
+    required this.currentUserId,
+    required this.currentUserRole,
     this.notificationRepository,
     super.key,
   });
 
   final String authToken;
+  final String currentUserId;
+  final String currentUserRole;
   final NotificationRepository? notificationRepository;
 
   @override
@@ -55,6 +60,27 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
   }
 
+  Future<void> _handleTap(NotificationItem notification) async {
+    await _markRead(notification);
+    if (!mounted) return;
+
+    // Deep-link: most notifications carry the related eventId so tapping opens
+    // the event. This is what makes notifications actionable instead of inert.
+    final eventId = notification.data['eventId'];
+    if (eventId != null && eventId.isNotEmpty) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => EventDetailScreen(
+            eventId: eventId,
+            authToken: widget.authToken,
+            currentUserId: widget.currentUserId,
+            currentUserRole: widget.currentUserRole,
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _markRead(NotificationItem notification) async {
     if (notification.isRead) {
       return;
@@ -65,14 +91,17 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
         authToken: widget.authToken,
         notificationId: notification.id,
       );
+      if (!mounted) return;
       setState(() {
         _notifications = _notifications
             .map((item) => item.id == updated.id ? updated : item)
             .toList();
       });
     } on ApiException catch (error) {
+      if (!mounted) return;
       setState(() => _errorMessage = error.message);
     } catch (_) {
+      if (!mounted) return;
       setState(() => _errorMessage = 'Unable to mark notification read');
     }
   }
@@ -114,7 +143,7 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                   padding: const EdgeInsets.only(bottom: 12),
                   child: _NotificationTile(
                     notification: notification,
-                    onTap: () => _markRead(notification),
+                    onTap: () => _handleTap(notification),
                   ),
                 ),
               ),

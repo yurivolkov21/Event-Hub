@@ -25,4 +25,50 @@ class InvitationRepository {
         )
         .toList();
   }
+
+  Future<List<InvitationItem>> listMyInvitations({
+    required String authToken,
+    String? status,
+  }) async {
+    final response = await _apiClient.getJson(
+      '/invitations/me',
+      authToken: authToken,
+      queryParameters: {
+        'limit': '50',
+        if (status != null && status.isNotEmpty) 'status': status,
+      },
+    );
+
+    return PaginatedInvitations.fromJson(response).data;
+  }
+
+  Future<InvitationItem> acceptInvitation({
+    required String authToken,
+    required String invitationId,
+  }) async {
+    final response = await _apiClient.putJson(
+      '/invitations/$invitationId/accept',
+      authToken: authToken,
+      body: const {},
+    );
+
+    return InvitationItem.fromJson(
+      response['invitation'] as Map<String, dynamic>,
+    );
+  }
+
+  Future<InvitationItem> rejectInvitation({
+    required String authToken,
+    required String invitationId,
+  }) async {
+    final response = await _apiClient.putJson(
+      '/invitations/$invitationId/reject',
+      authToken: authToken,
+      body: const {},
+    );
+
+    return InvitationItem.fromJson(
+      response['invitation'] as Map<String, dynamic>,
+    );
+  }
 }

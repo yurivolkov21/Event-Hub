@@ -20,6 +20,11 @@ eventRouter.post(
   invitationController.createInvitations,
 );
 eventRouter.get('/:eventId/reviews', reviewController.listReviews);
+eventRouter.get(
+  '/:eventId/reviews/eligibility',
+  authMiddleware,
+  reviewController.getReviewEligibility,
+);
 eventRouter.post(
   '/:eventId/reviews',
   authMiddleware,

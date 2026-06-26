@@ -4,7 +4,7 @@ import '../../../core/networking/api_client.dart';
 import '../../../core/theme/eventhub_theme.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../bookmarks/data/bookmark_repository.dart';
-import '../../users/presentation/invite_friend_screen.dart';
+import '../../invitations/presentation/my_invitations_screen.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'all_events_screen.dart';
@@ -175,10 +175,14 @@ class _EventListScreenState extends State<EventListScreen> {
         });
   }
 
-  void _openInviteFriends() {
+  void _openInvitations() {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => InviteFriendScreen(authToken: widget.authToken),
+        builder: (_) => MyInvitationsScreen(
+          authToken: widget.authToken,
+          currentUserId: widget.currentUserId,
+          currentUserRole: widget.currentUserRole,
+        ),
       ),
     );
   }
@@ -299,7 +303,7 @@ class _EventListScreenState extends State<EventListScreen> {
                       ),
                     ),
                     const SizedBox(height: 26),
-                    _InviteBanner(onTap: _openInviteFriends),
+                    _InviteBanner(onTap: _openInvitations),
                     const SizedBox(height: 28),
                     _SectionHeader(title: 'Nearby You', onTap: _openAllEvents),
                     const SizedBox(height: 14),
@@ -748,14 +752,14 @@ class _InviteBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Invite your friends',
+                  'Your invitations',
                   style: Theme.of(
                     context,
                   ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Share moments together',
+                  'See events friends invited you to',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyLarge?.copyWith(color: EventHubTheme.muted),
@@ -767,7 +771,7 @@ class _InviteBanner extends StatelessWidget {
                     backgroundColor: EventHubTheme.accent,
                     minimumSize: const Size(132, 48),
                   ),
-                  child: const Text('INVITE'),
+                  child: const Text('VIEW'),
                 ),
               ],
             ),

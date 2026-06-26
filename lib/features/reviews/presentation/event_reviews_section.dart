@@ -28,6 +28,7 @@ class EventReviewsSection extends StatefulWidget {
 class _EventReviewsSectionState extends State<EventReviewsSection> {
   late final ReviewRepository _reviewRepository;
   List<ReviewItem> _reviews = [];
+  ReviewEligibility? _eligibility;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -46,8 +47,19 @@ class _EventReviewsSectionState extends State<EventReviewsSection> {
 
     try {
       final reviews = await _reviewRepository.listReviews(widget.eventId);
+      final eligibility = await _reviewRepository
+          .getReviewEligibility(
+            authToken: widget.authToken,
+            eventId: widget.eventId,
+          )
+          .catchError(
+            (_) => const ReviewEligibility(canReview: false, reason: null),
+          );
       if (!mounted) return;
-      setState(() => _reviews = reviews);
+      setState(() {
+        _reviews = reviews;
+        _eligibility = eligibility;
+      });
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() => _errorMessage = error.message);
@@ -101,6 +113,50 @@ class _EventReviewsSectionState extends State<EventReviewsSection> {
     }
   }
 
+  Widget _buildWriteReviewControl(BuildContext context) {
+    final eligibility = _eligibility;
+
+    if (eligibility == null) {
+      return const SizedBox.shrink();
+    }
+
+    if (eligibility.canReview) {
+      return OutlinedButton.icon(
+        onPressed: _writeReview,
+        icon: const Icon(Icons.rate_review_outlined, size: 18),
+        label: const Text('Write a review'),
+        style: OutlinedButton.styleFrom(minimumSize: const Size(0, 46)),
+      );
+    }
+
+    final reason = eligibility.reason;
+    if (reason == null || reason.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: EventHubTheme.softBlue,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline, size: 18, color: EventHubTheme.muted),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              reason,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: EventHubTheme.muted),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -125,12 +181,7 @@ class _EventReviewsSectionState extends State<EventReviewsSection> {
           ],
         ),
         const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: _writeReview,
-          icon: const Icon(Icons.rate_review_outlined, size: 18),
-          label: const Text('Write a review'),
-          style: OutlinedButton.styleFrom(minimumSize: const Size(0, 46)),
-        ),
+        _buildWriteReviewControl(context),
         const SizedBox(height: 14),
         if (_isLoading)
           const Padding(

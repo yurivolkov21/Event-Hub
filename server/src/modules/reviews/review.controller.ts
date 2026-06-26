@@ -31,6 +31,24 @@ export const listOrganizerReviews: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getReviewEligibility: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new AppError('Authentication token is required', 401);
+    }
+
+    const { eventId } = eventIdParamSchema.parse(req.params);
+    const eligibility = await reviewService.getReviewEligibility(
+      eventId,
+      req.user.id,
+    );
+
+    res.json(eligibility);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createReview: RequestHandler = async (req, res, next) => {
   try {
     if (!req.user) {

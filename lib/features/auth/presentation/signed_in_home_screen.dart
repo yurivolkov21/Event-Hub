@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/eventhub_theme.dart';
 import '../../bookings/presentation/my_tickets_screen.dart';
 import '../../events/presentation/event_list_screen.dart';
+import '../../invitations/presentation/my_invitations_screen.dart';
 import '../../notifications/presentation/notification_list_screen.dart';
 import '../../users/presentation/profile_screen.dart';
 import '../application/auth_controller.dart';
@@ -86,8 +87,11 @@ class SignedInHomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            NotificationListScreen(authToken: session.token),
+                        builder: (_) => NotificationListScreen(
+                          authToken: session.token,
+                          currentUserId: user.id,
+                          currentUserRole: user.role,
+                        ),
                       ),
                     );
                   },
@@ -405,11 +409,27 @@ class _HomeDrawer extends StatelessWidget {
                   _go(context, MyTicketsScreen(authToken: session.token)),
             ),
             _DrawerItem(
+              icon: Icons.mail_outline,
+              label: 'Invitations',
+              onTap: () => _go(
+                context,
+                MyInvitationsScreen(
+                  authToken: session.token,
+                  currentUserId: user.id,
+                  currentUserRole: user.role,
+                ),
+              ),
+            ),
+            _DrawerItem(
               icon: Icons.notifications_none,
               label: 'Notifications',
               onTap: () => _go(
                 context,
-                NotificationListScreen(authToken: session.token),
+                NotificationListScreen(
+                  authToken: session.token,
+                  currentUserId: user.id,
+                  currentUserRole: user.role,
+                ),
               ),
             ),
             const Spacer(),

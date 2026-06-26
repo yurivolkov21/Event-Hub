@@ -7,6 +7,7 @@ import { UserModel } from '../users/user.model';
 import { InvitationModel, type InvitationDocument } from './invitation.model';
 import {
   toPublicInvitation,
+  toPublicInvitationWithRefs,
   type PublicInvitation,
 } from './invitation.dto';
 import type {
@@ -116,6 +117,8 @@ export const listMyInvitations = async (
 
   const [invitations, total] = await Promise.all([
     InvitationModel.find(filter)
+      .populate('eventId', 'title imageUrl startAt venueName')
+      .populate('fromUserId', 'fullName')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(query.limit),
@@ -124,7 +127,7 @@ export const listMyInvitations = async (
 
   return {
     data: invitations.map((invitation) =>
-      toPublicInvitation(invitation as InvitationDocument),
+      toPublicInvitationWithRefs(invitation as InvitationDocument),
     ),
     pagination: {
       page: query.page,
@@ -159,6 +162,30 @@ const updateInvitationStatus = async (
   if (!invitation) {
     throw new AppError('Pending invitation not found', 404);
   }
+
+  // Close the loop: tell the inviter how the recipient responded.
+  const [event, responder] = await Promise.all([
+    EventModel.findById(invitation.eventId).select('title'),
+    UserModel.findById(userId).select('fullName'),
+  ]);
+
+  const responderName = responder?.get('fullName') ?? 'Someone';
+  const eventTitle = event?.get('title') ?? 'your event';
+  const verb = status === 'accepted' ? 'accepted' : 'declined';
+
+  await notificationService
+    .createNotification({
+      userId: invitation.fromUserId.toString(),
+      type: 'invite_response',
+      title: `Invitation ${verb}`,
+      body: `${responderName} ${verb} your invitation to "${eventTitle}".`,
+      data: {
+        eventId: invitation.eventId.toString(),
+        invitationId: invitation._id.toString(),
+        status,
+      },
+    })
+    .catch(() => undefined);
 
   return toPublicInvitation(invitation);
 };

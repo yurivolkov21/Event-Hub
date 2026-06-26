@@ -8,7 +8,9 @@ import {
 
 export const notificationTypes = [
   'invite',
+  'invite_response',
   'booking',
+  'event_created',
   'event_update',
   'event_cancelled',
   'follow',

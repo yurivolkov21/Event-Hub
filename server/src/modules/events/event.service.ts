@@ -1,7 +1,10 @@
 import { Types } from 'mongoose';
 
 import { AppError } from '../../middlewares/error.middleware';
+import { BookingModel } from '../bookings/booking.model';
 import { deleteImageFromCloudinary } from '../images/image-storage.service';
+import * as notificationService from '../notifications/notification.service';
+import type { NotificationType } from '../notifications/notification.model';
 import { toPublicEvent, type PublicEvent } from './event.dto';
 import { EventModel, type EventDocument } from './event.model';
 import type {
@@ -112,6 +115,38 @@ const deleteEventImageIfPresent = async (
   }
 };
 
+/**
+ * Notifies every user with a confirmed booking for an event. Used when an
+ * organizer updates or cancels an event so attendees are kept in the loop —
+ * exactly what a real ticketing app does. Failures are swallowed so the core
+ * CRUD operation always succeeds even if a push fails.
+ */
+const notifyConfirmedAttendees = async (
+  eventId: Types.ObjectId,
+  type: Extract<NotificationType, 'event_update' | 'event_cancelled'>,
+  title: string,
+  body: string,
+): Promise<void> => {
+  const attendeeIds = await BookingModel.find({
+    eventId,
+    status: 'confirmed',
+  }).distinct('userId');
+
+  await Promise.all(
+    attendeeIds.map((attendeeId) =>
+      notificationService
+        .createNotification({
+          userId: attendeeId.toString(),
+          type,
+          title,
+          body,
+          data: { eventId: eventId.toString() },
+        })
+        .catch(() => undefined),
+    ),
+  );
+};
+
 export const listEvents = async (
   query: ListEventsQuery,
 ): Promise<PaginatedEvents> => {
@@ -161,6 +196,18 @@ export const createEvent = async (
     bookedCount: 0,
   });
 
+  // Confirmation push to the organizer so a real notification lands on the
+  // device right after creating an event. Best-effort: never block creation.
+  await notificationService
+    .createNotification({
+      userId: organizerId,
+      type: 'event_created',
+      title: 'Event published',
+      body: `Your event "${event.title}" is now live.`,
+      data: { eventId: event._id.toString() },
+    })
+    .catch(() => undefined);
+
   return toPublicEvent(event as EventDocument);
 };
 
@@ -200,6 +247,13 @@ export const updateEvent = async (
     await deleteEventImageIfPresent(previousImagePublicId);
   }
 
+  await notifyConfirmedAttendees(
+    event._id,
+    'event_update',
+    'Event updated',
+    `"${event.title}" has been updated. Check the latest details.`,
+  );
+
   return toPublicEvent(event);
 };
 
@@ -216,6 +270,15 @@ export const deleteEvent = async (
   assertCanManageEvent(event, user);
 
   const imagePublicId = event.imagePublicId;
+  const eventTitle = event.title;
+
+  // Notify attendees BEFORE removing the event (their bookings reference it).
+  await notifyConfirmedAttendees(
+    event._id,
+    'event_cancelled',
+    'Event cancelled',
+    `"${eventTitle}" has been cancelled by the organizer.`,
+  );
 
   await event.deleteOne();
   await deleteEventImageIfPresent(imagePublicId);
