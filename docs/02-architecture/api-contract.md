@@ -79,6 +79,7 @@ List query params:
 ```text
 search
 categoryId
+organizerId
 date
 minPrice
 maxPrice
@@ -88,6 +89,8 @@ page
 limit
 sort
 ```
+
+`organizerId` filters events by their owner (used by the Organizer Profile "Events" tab).
 
 Create event body can be JSON or multipart form data if uploading image.
 
@@ -146,6 +149,19 @@ PUT  /api/notifications/:id/read
 
 `POST /api/notifications/register-token` stores the current device token for FCM. Notification history list/read is available through the same module.
 
+**Notification triggers** (each creates a history row and sends an FCM push):
+
+| Type | Recipient | When |
+|------|-----------|------|
+| `booking` | the booker | a booking is confirmed |
+| `event_created` | the organizer | they publish an event |
+| `event_update` | confirmed attendees | the organizer edits the event |
+| `event_cancelled` | confirmed attendees | the organizer deletes/cancels the event |
+| `invite` | the invited user | an organizer/user invites them to an event |
+| `invite_response` | the inviter | the invitee accepts or rejects |
+
+Notifications carry an `eventId` in `data`, so tapping one deep-links to the event.
+
 Register FCM token body:
 
 ```json
@@ -176,8 +192,9 @@ Create invitation body:
 ## Reviews
 
 ```text
-POST /api/events/:eventId/reviews
 GET  /api/events/:eventId/reviews
+GET  /api/events/:eventId/reviews/eligibility   (auth)
+POST /api/events/:eventId/reviews               (auth)
 ```
 
 Create review body:
@@ -189,10 +206,39 @@ Create review body:
 }
 ```
 
+**Review rules (enforced server-side and surfaced in the UI):**
+
+- An organizer cannot review their own event.
+- A user can only review an event they have a `confirmed` booking for.
+
+`GET .../reviews/eligibility` returns whether the current user may review, so the
+app can hide the "Write a review" button and show the reason:
+
+```json
+{ "canReview": false, "reason": "You can only review events you have booked." }
+```
+
 ## Users
 
 ```text
-GET /api/users
+GET /api/users                  (auth) — list/search users
+GET /api/users/:id              — public profile
+GET /api/users/:id/reviews      — reviews across that organizer's events
+PUT /api/users/me               (auth) — update own profile
+```
+
+`GET /api/users/:id` and `/:id/reviews` back the Organizer Profile screen.
+`PUT /api/users/me` updates the signed-in user's profile.
+
+Update profile body (all fields optional):
+
+```json
+{
+  "fullName": "Ashfak Sayem",
+  "phone": "+1 555 0100",
+  "bio": "Event lover",
+  "interests": ["Music", "Sports"]
+}
 ```
 
 List users is protected and is currently used by the Invite Friend flow.
