@@ -69,27 +69,51 @@ export const googleAuth = async (idToken: string): Promise<AuthResponse> => {
     throw new AppError('Invalid or expired Google sign-in token', 401);
   }
 
+  // Only accept tokens that actually came from Google sign-in with a verified
+  // email. This blocks tokens minted via other providers and unverified emails.
+  if (decoded.firebase?.sign_in_provider !== 'google.com') {
+    throw new AppError('Unsupported sign-in provider', 401);
+  }
+
+  if (decoded.email_verified !== true) {
+    throw new AppError('Google email is not verified', 401);
+  }
+
   const email = decoded.email?.trim().toLowerCase();
 
   if (!email) {
     throw new AppError('Google account does not expose an email', 400);
   }
 
+  const existingUser = (await UserModel.findOne({
+    email,
+  })) as UserDocument | null;
+
+  if (existingUser) {
+    // Account-takeover guard: a Google sign-in must not assume an account that
+    // was registered with a password (local) or any other provider, because
+    // local registration never proves email ownership.
+    if (existingUser.authProvider !== 'google') {
+      throw new AppError(
+        'An account with this email already exists. Please sign in with your password.',
+        409,
+      );
+    }
+
+    return buildAuthResponse(existingUser);
+  }
+
   const fullName = decoded.name?.trim() || email.split('@')[0];
   const avatarUrl = decoded.picture ?? null;
 
-  let user = (await UserModel.findOne({ email })) as UserDocument | null;
-
-  if (!user) {
-    user = (await UserModel.create({
-      fullName,
-      email,
-      role: 'user',
-      authProvider: 'google',
-      avatarUrl,
-      interests: [],
-    })) as UserDocument;
-  }
+  const user = (await UserModel.create({
+    fullName,
+    email,
+    role: 'user',
+    authProvider: 'google',
+    avatarUrl,
+    interests: [],
+  })) as UserDocument;
 
   return buildAuthResponse(user);
 };
