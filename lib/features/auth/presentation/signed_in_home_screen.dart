@@ -18,6 +18,7 @@ class SignedInHomeScreen extends StatelessWidget {
     final session = controller.session!;
 
     return Scaffold(
+      drawer: _HomeDrawer(controller: controller),
       body: ListView(
         padding: EdgeInsets.zero,
         children: [
@@ -139,7 +140,7 @@ class _HomeHeader extends StatelessWidget {
                   foregroundColor: Colors.white,
                 ),
                 tooltip: 'Menu',
-                onPressed: () {},
+                onPressed: () => Scaffold.of(context).openDrawer(),
                 icon: const Icon(Icons.menu),
               ),
               const Spacer(),
@@ -312,6 +313,143 @@ class _HomeActionTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HomeDrawer extends StatelessWidget {
+  const _HomeDrawer({required this.controller});
+
+  final AuthController controller;
+
+  void _go(BuildContext context, Widget screen) {
+    Navigator.of(context).pop();
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => screen));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = controller.user!;
+    final session = controller.session!;
+
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 26,
+                    backgroundColor: EventHubTheme.primary.withValues(
+                      alpha: 0.14,
+                    ),
+                    foregroundColor: EventHubTheme.primary,
+                    child: Text(
+                      _initialsFromName(user.fullName),
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.fullName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        Text(
+                          user.email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: EventHubTheme.muted),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            _DrawerItem(
+              icon: Icons.person_outline,
+              label: 'My Profile',
+              onTap: () =>
+                  _go(context, ProfileScreen(authToken: session.token)),
+            ),
+            _DrawerItem(
+              icon: Icons.explore_outlined,
+              label: 'Events',
+              onTap: () => _go(
+                context,
+                EventListScreen(
+                  authToken: session.token,
+                  currentUserId: user.id,
+                  currentUserRole: user.role,
+                ),
+              ),
+            ),
+            _DrawerItem(
+              icon: Icons.confirmation_number_outlined,
+              label: 'My Tickets',
+              onTap: () =>
+                  _go(context, MyTicketsScreen(authToken: session.token)),
+            ),
+            _DrawerItem(
+              icon: Icons.notifications_none,
+              label: 'Notifications',
+              onTap: () => _go(
+                context,
+                NotificationListScreen(authToken: session.token),
+              ),
+            ),
+            const Spacer(),
+            const Divider(height: 1),
+            _DrawerItem(
+              icon: Icons.logout,
+              label: 'Sign Out',
+              onTap: () {
+                Navigator.of(context).pop();
+                controller.logout();
+              },
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DrawerItem extends StatelessWidget {
+  const _DrawerItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: EventHubTheme.primary),
+      title: Text(
+        label,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      onTap: onTap,
     );
   }
 }
