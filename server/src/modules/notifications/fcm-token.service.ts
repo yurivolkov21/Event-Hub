@@ -89,10 +89,11 @@ export const sendPushToUser = async (
         },
         data: payload.data ?? {},
         android: {
+          // No explicit channelId: the app does not create an "eventhub_default"
+          // channel, and Android 8+ silently drops notifications sent to a
+          // non-existent channel. Omitting it lets the Firebase SDK fall back to
+          // its auto-created default channel so background pushes are displayed.
           priority: 'high',
-          notification: {
-            channelId: 'eventhub_default',
-          },
         },
       },
       env.FCM_DRY_RUN,
