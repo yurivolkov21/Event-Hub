@@ -5,6 +5,7 @@ import {
   initializeApp,
   type App,
 } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import { getMessaging } from 'firebase-admin/messaging';
 
 import { env } from './env';
@@ -61,4 +62,8 @@ export const getFirebaseApp = (): App => {
 
 export const getFirebaseMessaging = () => {
   return getMessaging(getFirebaseApp());
+};
+
+export const getFirebaseAuth = () => {
+  return getAuth(getFirebaseApp());
 };

@@ -5,19 +5,23 @@ import '../../../core/storage/session_storage.dart';
 import '../../notifications/fcm_notification_service.dart';
 import '../data/auth_models.dart';
 import '../data/auth_repository.dart';
+import '../data/google_auth_service.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({
     AuthRepository? authRepository,
     SessionStorage? sessionStorage,
+    GoogleAuthService? googleAuthService,
     this.fcmNotificationService,
     bool startLoading = true,
   }) : _authRepository = authRepository ?? AuthRepository(),
        _sessionStorage = sessionStorage ?? SessionStorage(),
+       _googleAuthService = googleAuthService ?? GoogleAuthService(),
        _isLoading = startLoading;
 
   final AuthRepository _authRepository;
   final SessionStorage _sessionStorage;
+  final GoogleAuthService _googleAuthService;
   final FcmNotificationService? fcmNotificationService;
 
   AuthSession? _session;
@@ -75,10 +79,38 @@ class AuthController extends ChangeNotifier {
     );
   }
 
+  Future<void> signInWithGoogle() async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final firebaseIdToken = await _googleAuthService.signIn();
+
+      if (firebaseIdToken == null) {
+        // User cancelled the Google account picker.
+        return;
+      }
+
+      final nextSession = await _authRepository.googleSignIn(
+        firebaseIdToken: firebaseIdToken,
+      );
+      _session = nextSession;
+      await _sessionStorage.write(nextSession);
+      await _registerFcmToken();
+    } on ApiException catch (error) {
+      _errorMessage = error.message;
+    } catch (_) {
+      _errorMessage = 'Google sign-in failed. Please try again.';
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<void> logout() async {
     _session = null;
     _errorMessage = null;
     await _sessionStorage.clear();
+    await _googleAuthService.signOut();
     notifyListeners();
   }
 

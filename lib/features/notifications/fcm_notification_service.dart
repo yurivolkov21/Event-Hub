@@ -12,10 +12,14 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class FcmNotificationService {
-  FcmNotificationService({FirebaseMessaging? messaging})
-    : _messaging = messaging ?? FirebaseMessaging.instance;
+  FcmNotificationService({
+    FirebaseMessaging? messaging,
+    void Function(RemoteMessage message)? onForegroundMessage,
+  }) : _messaging = messaging ?? FirebaseMessaging.instance,
+       _onForegroundMessage = onForegroundMessage;
 
   final FirebaseMessaging _messaging;
+  final void Function(RemoteMessage message)? _onForegroundMessage;
 
   Future<String?> initialize() async {
     await _messaging.requestPermission(alert: true, badge: true, sound: true);
@@ -27,7 +31,7 @@ class FcmNotificationService {
     );
 
     FirebaseMessaging.onMessage.listen((message) {
-      // Foreground UI handling will be connected when notification screens exist.
+      _onForegroundMessage?.call(message);
     });
 
     return _messaging.getToken();

@@ -218,6 +218,37 @@ class _AuthScreenState extends State<AuthScreen> {
                             ],
                           ),
                         ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            const Expanded(child: Divider()),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(
+                                'OR',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(color: EventHubTheme.muted),
+                              ),
+                            ),
+                            const Expanded(child: Divider()),
+                          ],
+                        ),
+                        const SizedBox(height: 18),
+                        OutlinedButton.icon(
+                          onPressed: widget.controller.isLoading
+                              ? null
+                              : () => widget.controller.signInWithGoogle(),
+                          icon: const Icon(Icons.g_mobiledata, size: 30),
+                          label: const Text('Continue with Google'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size.fromHeight(56),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                        ),
                         const SizedBox(height: 30),
                         Wrap(
                           alignment: WrapAlignment.center,

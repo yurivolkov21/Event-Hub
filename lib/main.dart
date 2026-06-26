@@ -9,6 +9,57 @@ import 'features/auth/presentation/auth_screen.dart';
 import 'features/auth/presentation/signed_in_home_screen.dart';
 import 'features/notifications/fcm_notification_service.dart';
 
+final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+void _showForegroundNotification(RemoteMessage message) {
+  final notification = message.notification;
+  final messenger = rootScaffoldMessengerKey.currentState;
+
+  if (notification == null || messenger == null) {
+    return;
+  }
+
+  messenger
+    ..clearSnackBars()
+    ..showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        backgroundColor: EventHubTheme.primary,
+        content: Row(
+          children: [
+            const Icon(Icons.notifications_active, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    notification.title ?? 'EventHub',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  if (notification.body != null && notification.body!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text(
+                        notification.body!,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -17,7 +68,9 @@ Future<void> main() async {
   if (!kIsWeb) {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
-    fcmNotificationService = FcmNotificationService();
+    fcmNotificationService = FcmNotificationService(
+      onForegroundMessage: _showForegroundNotification,
+    );
     await fcmNotificationService.initialize();
   }
 
@@ -64,6 +117,7 @@ class _EventHubAppState extends State<EventHubApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       title: 'EventHub',
       theme: EventHubTheme.light(),

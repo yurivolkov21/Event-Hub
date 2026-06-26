@@ -28,8 +28,14 @@ const userSchema = new Schema(
     },
     passwordHash: {
       type: String,
-      required: true,
+      required: false,
       select: false,
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+      index: true,
     },
     role: {
       type: String,

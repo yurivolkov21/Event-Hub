@@ -38,6 +38,15 @@ class AuthRepository {
     return AuthSession.fromJson(response);
   }
 
+  Future<AuthSession> googleSignIn({required String firebaseIdToken}) async {
+    final response = await _apiClient.postJson(
+      '/auth/google',
+      body: {'idToken': firebaseIdToken},
+    );
+
+    return AuthSession.fromJson(response);
+  }
+
   Future<AuthUser> me(String token) async {
     final response = await _apiClient.getJson('/auth/me', authToken: token);
 

@@ -1,4 +1,5 @@
 import { AppError } from '../../middlewares/error.middleware';
+import { getFirebaseAuth } from '../../config/firebase';
 import { toPublicUser, type PublicUser } from '../users/user.dto';
 import { UserModel, type UserDocument } from '../users/user.model';
 import { signAuthToken } from '../../utils/jwt';
@@ -46,7 +47,7 @@ export const login = async (input: LoginInput): Promise<AuthResponse> => {
     '+passwordHash',
   )) as UserDocument | null;
 
-  if (!user) {
+  if (!user || !user.passwordHash) {
     throw new AppError('Invalid email or password', 401);
   }
 
@@ -54,6 +55,40 @@ export const login = async (input: LoginInput): Promise<AuthResponse> => {
 
   if (!passwordMatches) {
     throw new AppError('Invalid email or password', 401);
+  }
+
+  return buildAuthResponse(user);
+};
+
+export const googleAuth = async (idToken: string): Promise<AuthResponse> => {
+  let decoded;
+
+  try {
+    decoded = await getFirebaseAuth().verifyIdToken(idToken);
+  } catch {
+    throw new AppError('Invalid or expired Google sign-in token', 401);
+  }
+
+  const email = decoded.email?.trim().toLowerCase();
+
+  if (!email) {
+    throw new AppError('Google account does not expose an email', 400);
+  }
+
+  const fullName = decoded.name?.trim() || email.split('@')[0];
+  const avatarUrl = decoded.picture ?? null;
+
+  let user = (await UserModel.findOne({ email })) as UserDocument | null;
+
+  if (!user) {
+    user = (await UserModel.create({
+      fullName,
+      email,
+      role: 'user',
+      authProvider: 'google',
+      avatarUrl,
+      interests: [],
+    })) as UserDocument;
   }
 
   return buildAuthResponse(user);
