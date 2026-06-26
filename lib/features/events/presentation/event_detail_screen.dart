@@ -124,7 +124,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         _ => const SizedBox.shrink(),
       },
-      bottomNavigationBar: event == null || _errorMessage != null || _isLoading
+      bottomNavigationBar:
+          event == null ||
+              _errorMessage != null ||
+              _isLoading ||
+              event.organizerId == widget.currentUserId
+          // Organizers cannot book their own event, so hide the booking bar.
           ? null
           : _BookingBar(
               event: event,
