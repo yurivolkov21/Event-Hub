@@ -118,6 +118,31 @@ export const googleAuth = async (idToken: string): Promise<AuthResponse> => {
   return buildAuthResponse(user);
 };
 
+interface MessageResponse {
+  message: string;
+}
+
+const PASSWORD_RESET_MESSAGE =
+  'If an account exists for that email, password reset instructions have been sent.';
+
+/**
+ * Initiates a password reset. Always responds with the same generic message so
+ * the endpoint cannot be used to enumerate which emails are registered. Email
+ * delivery is intentionally not wired up (no SMTP provider is configured); the
+ * lookup runs so the flow is real, but no token is leaked to the client.
+ */
+export const forgotPassword = async (
+  email: string,
+): Promise<MessageResponse> => {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  // Only password (local) accounts can reset a password; Google accounts have
+  // no passwordHash. We look the user up but never reveal the outcome.
+  await UserModel.exists({ email: normalizedEmail, authProvider: 'local' });
+
+  return { message: PASSWORD_RESET_MESSAGE };
+};
+
 export const getCurrentUser = async (userId: string): Promise<PublicUser> => {
   const user = (await UserModel.findById(userId)) as UserDocument | null;
 

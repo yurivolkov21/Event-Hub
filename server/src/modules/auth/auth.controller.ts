@@ -1,7 +1,12 @@
 import type { RequestHandler } from 'express';
 
 import { AppError } from '../../middlewares/error.middleware';
-import { googleAuthSchema, loginSchema, registerSchema } from './auth.schemas';
+import {
+  forgotPasswordSchema,
+  googleAuthSchema,
+  loginSchema,
+  registerSchema,
+} from './auth.schemas';
 import * as authService from './auth.service';
 
 export const register: RequestHandler = async (req, res, next) => {
@@ -30,6 +35,17 @@ export const googleAuth: RequestHandler = async (req, res, next) => {
   try {
     const input = googleAuthSchema.parse(req.body);
     const response = await authService.googleAuth(input.idToken);
+
+    res.json(response);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const forgotPassword: RequestHandler = async (req, res, next) => {
+  try {
+    const input = forgotPasswordSchema.parse(req.body);
+    const response = await authService.forgotPassword(input.email);
 
     res.json(response);
   } catch (error) {

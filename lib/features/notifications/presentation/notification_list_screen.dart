@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/networking/api_client.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../data/notification_models.dart';
 import '../data/notification_repository.dart';
 
@@ -97,10 +98,15 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                 onRetry: _loadNotifications,
               )
             else if (_notifications.isEmpty)
-              _NotificationMessage(
-                icon: Icons.notifications_none,
-                message: 'No notifications yet',
-                onRetry: _loadNotifications,
+              const Padding(
+                padding: EdgeInsets.only(top: 40),
+                child: EmptyState(
+                  icon: Icons.notifications_none,
+                  badge: '0',
+                  title: 'No Notifications!',
+                  message:
+                      'Your booking updates and event invitations will show up here.',
+                ),
               )
             else
               ..._notifications.map(

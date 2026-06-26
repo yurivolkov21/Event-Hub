@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/eventhub_theme.dart';
 import '../application/auth_controller.dart';
+import 'reset_password_screen.dart';
 
 enum AuthMode { signIn, signUp }
 
@@ -158,6 +159,23 @@ class _AuthScreenState extends State<AuthScreen> {
                             return null;
                           },
                         ),
+                        if (!_isSignUp)
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: widget.controller.isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              const ResetPasswordScreen(),
+                                        ),
+                                      );
+                                    },
+                              child: const Text('Forgot Password?'),
+                            ),
+                          ),
                         if (_isSignUp) ...[
                           const SizedBox(height: 18),
                           SegmentedButton<String>(

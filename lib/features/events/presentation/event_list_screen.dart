@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../core/networking/api_client.dart';
 import '../../../core/theme/eventhub_theme.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../../bookmarks/data/bookmark_repository.dart';
+import '../../users/presentation/invite_friend_screen.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
+import 'all_events_screen.dart';
 import 'event_detail_screen.dart';
 import 'event_filter_sheet.dart';
 import 'event_form_screen.dart';
@@ -172,6 +175,32 @@ class _EventListScreenState extends State<EventListScreen> {
         });
   }
 
+  void _openInviteFriends() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => InviteFriendScreen(authToken: widget.authToken),
+      ),
+    );
+  }
+
+  void _openAllEvents() {
+    Navigator.of(context)
+        .push<bool>(
+          MaterialPageRoute<bool>(
+            builder: (_) => AllEventsScreen(
+              authToken: widget.authToken,
+              currentUserId: widget.currentUserId,
+              currentUserRole: widget.currentUserRole,
+            ),
+          ),
+        )
+        .then((changed) {
+          if (changed == true) {
+            _loadEvents();
+          }
+        });
+  }
+
   Future<void> _openCreateEvent() async {
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -223,7 +252,10 @@ class _EventListScreenState extends State<EventListScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SectionHeader(title: 'Upcoming Events', onTap: _loadEvents),
+                  _SectionHeader(
+                    title: 'Upcoming Events',
+                    onTap: _openAllEvents,
+                  ),
                   const SizedBox(height: 16),
                   if (_isLoading)
                     const _EventListLoading()
@@ -234,10 +266,13 @@ class _EventListScreenState extends State<EventListScreen> {
                       onRetry: _loadEvents,
                     )
                   else if (_events.isEmpty)
-                    _EventListMessage(
+                    EmptyState(
                       icon: Icons.event_busy,
-                      message: 'No events yet',
-                      onRetry: _loadEvents,
+                      title: 'No Upcoming Event',
+                      message:
+                          'There are no events to show right now. Pull to refresh or check back soon.',
+                      actionLabel: 'EXPLORE EVENTS',
+                      onAction: _loadEvents,
                     )
                   else ...[
                     SizedBox(
@@ -264,13 +299,9 @@ class _EventListScreenState extends State<EventListScreen> {
                       ),
                     ),
                     const SizedBox(height: 26),
-                    _InviteBanner(
-                      onTap: _events.isEmpty
-                          ? null
-                          : () => _openEvent(_events.first),
-                    ),
+                    _InviteBanner(onTap: _openInviteFriends),
                     const SizedBox(height: 28),
-                    _SectionHeader(title: 'Nearby You', onTap: _loadEvents),
+                    _SectionHeader(title: 'Nearby You', onTap: _openAllEvents),
                     const SizedBox(height: 14),
                     ..._events.map(
                       (event) => Padding(
