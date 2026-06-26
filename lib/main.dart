@@ -8,60 +8,13 @@ import 'features/auth/application/auth_controller.dart';
 import 'features/auth/presentation/auth_screen.dart';
 import 'features/auth/presentation/signed_in_home_screen.dart';
 import 'features/notifications/fcm_notification_service.dart';
+import 'features/notifications/local_notification_service.dart';
 import 'features/onboarding/data/onboarding_storage.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'features/onboarding/presentation/splash_screen.dart';
 
 final GlobalKey<ScaffoldMessengerState> rootScaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
-
-void _showForegroundNotification(RemoteMessage message) {
-  final notification = message.notification;
-  final messenger = rootScaffoldMessengerKey.currentState;
-
-  if (notification == null || messenger == null) {
-    return;
-  }
-
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 4),
-        backgroundColor: EventHubTheme.primary,
-        content: Row(
-          children: [
-            const Icon(Icons.notifications_active, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    notification.title ?? 'EventHub',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  if (notification.body != null && notification.body!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 2),
-                      child: Text(
-                        notification.body!,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -71,8 +24,14 @@ Future<void> main() async {
   if (!kIsWeb) {
     await Firebase.initializeApp();
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+    final localNotifications = LocalNotificationService();
+    await localNotifications.initialize();
+
     fcmNotificationService = FcmNotificationService(
-      onForegroundMessage: _showForegroundNotification,
+      // Post incoming foreground messages to the Android system notification
+      // shade (FCM does not do this automatically while the app is open).
+      onForegroundMessage: localNotifications.showFromMessage,
     );
     await fcmNotificationService.initialize();
   }
