@@ -35,36 +35,51 @@ class EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Stack(
-            alignment: Alignment.bottomRight,
-            children: [
-              Container(
-                width: 150,
-                height: 150,
-                decoration: const BoxDecoration(
-                  color: EventHubTheme.softBlue,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 64, color: EventHubTheme.primary),
-              ),
-              if (badge != null)
+          SizedBox(
+            width: 150,
+            height: 150,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: 150,
+                  height: 150,
                   decoration: const BoxDecoration(
-                    color: EventHubTheme.primary,
+                    color: EventHubTheme.softBlue,
                     shape: BoxShape.circle,
                   ),
-                  constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
-                  alignment: Alignment.center,
-                  child: Text(
-                    badge!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
+                  child: Icon(icon, size: 64, color: EventHubTheme.primary),
+                ),
+                if (badge != null)
+                  Positioned(
+                    right: 6,
+                    bottom: 16,
+                    child: Container(
+                      padding: const EdgeInsets.all(7),
+                      decoration: BoxDecoration(
+                        color: EventHubTheme.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: EventHubTheme.background,
+                          width: 3,
+                        ),
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 38,
+                        minHeight: 38,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        badge!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 28),
           Text(
