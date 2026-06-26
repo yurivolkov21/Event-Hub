@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../reviews/presentation/event_reviews_section.dart';
+import '../../users/presentation/organizer_profile_screen.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/networking/api_client.dart';
@@ -119,6 +120,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
           onBookmark: () => _toggleBookmark(loadedEvent),
           onEdit: () => _openEditEvent(loadedEvent),
           onDelete: () => _confirmDelete(loadedEvent),
+          onTapOrganizer: () => _openOrganizer(loadedEvent),
         ),
         _ => const SizedBox.shrink(),
       },
@@ -286,6 +288,19 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
     }
   }
 
+  void _openOrganizer(EventItem event) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => OrganizerProfileScreen(
+          organizerId: event.organizerId,
+          authToken: widget.authToken,
+          currentUserId: widget.currentUserId,
+          currentUserRole: widget.currentUserRole,
+        ),
+      ),
+    );
+  }
+
   Future<void> _openEditEvent(EventItem event) async {
     final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -358,6 +373,7 @@ class _EventDetailContent extends StatelessWidget {
     required this.onBookmark,
     required this.onEdit,
     required this.onDelete,
+    required this.onTapOrganizer,
   });
 
   final EventItem event;
@@ -371,6 +387,7 @@ class _EventDetailContent extends StatelessWidget {
   final VoidCallback onBookmark;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onTapOrganizer;
 
   @override
   Widget build(BuildContext context) {
@@ -412,7 +429,7 @@ class _EventDetailContent extends StatelessWidget {
                 subtitle: event.address,
               ),
               const SizedBox(height: 18),
-              _OrganizerRow(event: event),
+              _OrganizerRow(event: event, onTap: onTapOrganizer),
               const SizedBox(height: 30),
               Text(
                 'About Event',
@@ -708,23 +725,27 @@ class _InfoRow extends StatelessWidget {
 }
 
 class _OrganizerRow extends StatelessWidget {
-  const _OrganizerRow({required this.event});
+  const _OrganizerRow({required this.event, required this.onTap});
 
   final EventItem event;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 58,
-          height: 58,
-          decoration: BoxDecoration(
-            color: EventHubTheme.coral,
-            borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Row(
+        children: [
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              color: EventHubTheme.coral,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.person, color: Colors.white, size: 30),
           ),
-          child: const Icon(Icons.person, color: Colors.white, size: 30),
-        ),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -758,7 +779,8 @@ class _OrganizerRow extends StatelessWidget {
             ),
           ),
         ),
-      ],
+        ],
+      ),
     );
   }
 }

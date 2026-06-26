@@ -51,6 +51,10 @@ const buildListFilter = (query: ListEventsQuery): Record<string, unknown> => {
     filter.categoryId = new Types.ObjectId(query.categoryId);
   }
 
+  if (query.organizerId) {
+    filter.organizerId = new Types.ObjectId(query.organizerId);
+  }
+
   if (query.status) {
     filter.status = query.status;
   }

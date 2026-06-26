@@ -15,6 +15,22 @@ export const listReviews: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const listOrganizerReviews: RequestHandler = async (req, res, next) => {
+  try {
+    const organizerId = String(req.params.id ?? '');
+
+    if (!/^[a-f\d]{24}$/i.test(organizerId)) {
+      throw new AppError('Invalid user id', 400);
+    }
+
+    const reviews = await reviewService.listReviewsByOrganizer(organizerId);
+
+    res.json({ data: reviews });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const createReview: RequestHandler = async (req, res, next) => {
   try {
     if (!req.user) {

@@ -50,3 +50,17 @@ export const listReviews = async (
 
   return reviews.map((review) => toPublicReview(review as ReviewDocument));
 };
+
+export const listReviewsByOrganizer = async (
+  organizerId: string,
+): Promise<PublicReview[]> => {
+  const eventIds = await EventModel.find({
+    organizerId: new Types.ObjectId(organizerId),
+  }).distinct('_id');
+
+  const reviews = await ReviewModel.find({ eventId: { $in: eventIds } })
+    .populate('userId', 'fullName avatarUrl')
+    .sort({ createdAt: -1 });
+
+  return reviews.map((review) => toPublicReview(review as ReviewDocument));
+};

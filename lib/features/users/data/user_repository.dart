@@ -23,6 +23,12 @@ class UserRepository {
     return UserListResponse.fromJson(response).data;
   }
 
+  Future<UserProfile> getUserById(String userId) async {
+    final response = await _apiClient.getJson('/users/$userId');
+
+    return UserProfile.fromJson(response['user'] as Map<String, dynamic>);
+  }
+
   Future<UserProfile> getMyProfile({required String authToken}) async {
     final response = await _apiClient.getJson('/auth/me', authToken: authToken);
 

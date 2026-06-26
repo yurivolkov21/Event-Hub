@@ -3,8 +3,11 @@ import type { Router as ExpressRouter } from 'express';
 
 import { authMiddleware } from '../../middlewares/auth.middleware';
 import * as userController from './user.controller';
+import * as reviewController from '../reviews/review.controller';
 
 export const userRouter: ExpressRouter = Router();
 
 userRouter.get('/', authMiddleware, userController.listUsers);
 userRouter.put('/me', authMiddleware, userController.updateMyProfile);
+userRouter.get('/:id', userController.getUserById);
+userRouter.get('/:id/reviews', reviewController.listOrganizerReviews);

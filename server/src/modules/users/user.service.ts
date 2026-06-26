@@ -33,6 +33,16 @@ export const listUsers = async (
   return users.map((user) => toPublicUser(user as UserDocument));
 };
 
+export const getUserById = async (userId: string): Promise<PublicUser> => {
+  const user = (await UserModel.findById(userId)) as UserDocument | null;
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  return toPublicUser(user);
+};
+
 export const updateProfile = async (
   userId: string,
   input: UpdateProfileInput,

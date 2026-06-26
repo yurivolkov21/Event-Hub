@@ -15,6 +15,14 @@ class ReviewRepository {
         .toList();
   }
 
+  Future<List<ReviewItem>> listOrganizerReviews(String organizerId) async {
+    final response = await _apiClient.getJson('/users/$organizerId/reviews');
+
+    return (response['data'] as List<dynamic>)
+        .map((json) => ReviewItem.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
+
   Future<ReviewItem> createReview({
     required String authToken,
     required String eventId,

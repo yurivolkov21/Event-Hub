@@ -10,6 +10,7 @@ class EventRepository {
   Future<PaginatedEvents> listEvents({
     String? search,
     String? categoryId,
+    String? organizerId,
     double? minPrice,
     double? maxPrice,
     DateTime? date,
@@ -24,6 +25,8 @@ class EventRepository {
         if (search != null && search.trim().isNotEmpty) 'search': search.trim(),
         if (categoryId != null && categoryId.trim().isNotEmpty)
           'categoryId': categoryId.trim(),
+        if (organizerId != null && organizerId.trim().isNotEmpty)
+          'organizerId': organizerId.trim(),
         if (minPrice != null) 'minPrice': minPrice.toStringAsFixed(0),
         if (maxPrice != null) 'maxPrice': maxPrice.toStringAsFixed(0),
         if (date != null) 'date': date.toUtc().toIso8601String(),

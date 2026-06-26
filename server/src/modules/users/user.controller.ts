@@ -19,6 +19,22 @@ export const listUsers: RequestHandler = async (req, res, next) => {
   }
 };
 
+export const getUserById: RequestHandler = async (req, res, next) => {
+  try {
+    const id = String(req.params.id ?? '');
+
+    if (!/^[a-f\d]{24}$/i.test(id)) {
+      throw new AppError('Invalid user id', 400);
+    }
+
+    const user = await userService.getUserById(id);
+
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const updateMyProfile: RequestHandler = async (req, res, next) => {
   try {
     if (!req.user) {

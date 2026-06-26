@@ -79,6 +79,7 @@ export const listEventsQuerySchema = z
   .object({
     search: z.string().trim().optional(),
     categoryId: objectIdSchema.optional(),
+    organizerId: objectIdSchema.optional(),
     status: z.enum(eventStatuses).optional(),
     date: z.coerce.date().optional(),
     minPrice: z.coerce.number().min(0).optional(),
