@@ -201,6 +201,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         const SizedBox(height: 30),
+        if (_hasDetails(profile)) ...[
+          Text(
+            'Details',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 12),
+          if (profile.phone != null && profile.phone!.isNotEmpty)
+            _DetailRow(
+              icon: Icons.phone_outlined,
+              label: 'Phone',
+              value: profile.phone!,
+            ),
+          if (profile.location != null && profile.location!.isNotEmpty)
+            _DetailRow(
+              icon: Icons.location_on_outlined,
+              label: 'Location',
+              value: profile.location!,
+            ),
+          if (profile.dateOfBirth != null)
+            _DetailRow(
+              icon: Icons.cake_outlined,
+              label: 'Date of birth',
+              value: _formatDate(profile.dateOfBirth!),
+            ),
+          if (profile.gender != null && profile.gender!.isNotEmpty)
+            _DetailRow(
+              icon: Icons.wc_outlined,
+              label: 'Gender',
+              value:
+                  profile.gender![0].toUpperCase() +
+                  profile.gender!.substring(1),
+            ),
+          const SizedBox(height: 28),
+        ],
         Text(
           'About Me',
           style: Theme.of(
@@ -252,6 +288,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  bool _hasDetails(UserProfile profile) {
+    return (profile.phone != null && profile.phone!.isNotEmpty) ||
+        (profile.location != null && profile.location!.isNotEmpty) ||
+        profile.dateOfBirth != null ||
+        (profile.gender != null && profile.gender!.isNotEmpty);
+  }
+
+  String _formatDate(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}/${local.year}';
+  }
+
   String _initials(String value) {
     final words = value
         .trim()
@@ -268,5 +317,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .map((word) => word.characters.first)
         .join()
         .toUpperCase();
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: EventHubTheme.softBlue,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: EventHubTheme.primary),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: EventHubTheme.muted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
