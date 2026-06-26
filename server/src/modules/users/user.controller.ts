@@ -1,7 +1,7 @@
 import type { RequestHandler } from 'express';
 
 import { AppError } from '../../middlewares/error.middleware';
-import { listUsersQuerySchema } from './user.schemas';
+import { listUsersQuerySchema, updateProfileSchema } from './user.schemas';
 import * as userService from './user.service';
 
 export const listUsers: RequestHandler = async (req, res, next) => {
@@ -14,6 +14,21 @@ export const listUsers: RequestHandler = async (req, res, next) => {
     const users = await userService.listUsers(req.user.id, query);
 
     res.json({ data: users });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateMyProfile: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new AppError('Authentication token is required', 401);
+    }
+
+    const input = updateProfileSchema.parse(req.body);
+    const user = await userService.updateProfile(req.user.id, input);
+
+    res.json({ user });
   } catch (error) {
     next(error);
   }

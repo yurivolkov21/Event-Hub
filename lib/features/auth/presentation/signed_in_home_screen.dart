@@ -4,6 +4,7 @@ import '../../../core/theme/eventhub_theme.dart';
 import '../../bookings/presentation/my_tickets_screen.dart';
 import '../../events/presentation/event_list_screen.dart';
 import '../../notifications/presentation/notification_list_screen.dart';
+import '../../users/presentation/profile_screen.dart';
 import '../application/auth_controller.dart';
 
 class SignedInHomeScreen extends StatelessWidget {
@@ -25,6 +26,13 @@ class SignedInHomeScreen extends StatelessWidget {
             email: user.email,
             role: user.role,
             onLogout: controller.logout,
+            onTapProfile: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ProfileScreen(authToken: session.token),
+                ),
+              );
+            },
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
@@ -98,12 +106,14 @@ class _HomeHeader extends StatelessWidget {
     required this.email,
     required this.role,
     required this.onLogout,
+    required this.onTapProfile,
   });
 
   final String fullName;
   final String email;
   final String role;
   final VoidCallback onLogout;
+  final VoidCallback onTapProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -168,13 +178,16 @@ class _HomeHeader extends StatelessWidget {
           const SizedBox(height: 22),
           Row(
             children: [
-              CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.white,
-                foregroundColor: EventHubTheme.primary,
-                child: Text(
-                  _initialsFromName(fullName),
-                  style: const TextStyle(fontWeight: FontWeight.w900),
+              GestureDetector(
+                onTap: onTapProfile,
+                child: CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white,
+                  foregroundColor: EventHubTheme.primary,
+                  child: Text(
+                    _initialsFromName(fullName),
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
                 ),
               ),
               const SizedBox(width: 14),

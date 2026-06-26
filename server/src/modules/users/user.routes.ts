@@ -7,3 +7,4 @@ import * as userController from './user.controller';
 export const userRouter: ExpressRouter = Router();
 
 userRouter.get('/', authMiddleware, userController.listUsers);
+userRouter.put('/me', authMiddleware, userController.updateMyProfile);
