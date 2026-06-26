@@ -8,6 +8,7 @@ import {
 import { uploadEventImage } from '../../middlewares/upload.middleware';
 import * as eventController from './event.controller';
 import * as invitationController from '../invitations/invitation.controller';
+import * as reviewController from '../reviews/review.controller';
 
 export const eventRouter: ExpressRouter = Router();
 
@@ -17,6 +18,12 @@ eventRouter.post(
   '/:eventId/invitations',
   authMiddleware,
   invitationController.createInvitations,
+);
+eventRouter.get('/:eventId/reviews', reviewController.listReviews);
+eventRouter.post(
+  '/:eventId/reviews',
+  authMiddleware,
+  reviewController.createReview,
 );
 eventRouter.post(
   '/',

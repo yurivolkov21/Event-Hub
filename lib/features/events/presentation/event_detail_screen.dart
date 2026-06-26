@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../reviews/presentation/event_reviews_section.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/networking/api_client.dart';
@@ -107,6 +109,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
         ),
         (false, _, final loadedEvent?) => _EventDetailContent(
           event: loadedEvent,
+          authToken: widget.authToken,
           isBookmarked: _isBookmarked,
           isBookmarkLoading: _isBookmarkLoading,
           canManage: canManage,
@@ -345,6 +348,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
 class _EventDetailContent extends StatelessWidget {
   const _EventDetailContent({
     required this.event,
+    required this.authToken,
     required this.isBookmarked,
     required this.isBookmarkLoading,
     required this.canManage,
@@ -357,6 +361,7 @@ class _EventDetailContent extends StatelessWidget {
   });
 
   final EventItem event;
+  final String authToken;
   final bool isBookmarked;
   final bool isBookmarkLoading;
   final bool canManage;
@@ -442,6 +447,8 @@ class _EventDetailContent extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 30),
+              EventReviewsSection(eventId: event.id, authToken: authToken),
               if (canManage) ...[
                 const SizedBox(height: 18),
                 Row(
