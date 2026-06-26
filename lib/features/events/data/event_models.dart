@@ -15,6 +15,7 @@ class EventItem {
     required this.capacity,
     required this.bookedCount,
     required this.status,
+    this.organizerName,
     this.imageUrl,
     this.city,
     this.country,
@@ -27,6 +28,7 @@ class EventItem {
   final String description;
   final String categoryId;
   final String organizerId;
+  final String? organizerName;
   final String? imageUrl;
   final DateTime startAt;
   final DateTime endAt;
@@ -51,6 +53,7 @@ class EventItem {
       description: json['description'] as String,
       categoryId: json['categoryId'] as String,
       organizerId: json['organizerId'] as String,
+      organizerName: json['organizerName'] as String?,
       imageUrl: json['imageUrl'] as String?,
       startAt: DateTime.parse(json['startAt'] as String),
       endAt: DateTime.parse(json['endAt'] as String),

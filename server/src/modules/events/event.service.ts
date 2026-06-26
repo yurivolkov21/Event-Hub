@@ -134,7 +134,10 @@ export const listEvents = async (
 };
 
 export const getEventById = async (eventId: string): Promise<PublicEvent> => {
-  const event = (await EventModel.findById(eventId)) as EventDocument | null;
+  const event = (await EventModel.findById(eventId).populate(
+    'organizerId',
+    'fullName',
+  )) as EventDocument | null;
 
   if (!event) {
     throw new AppError('Event not found', 404);

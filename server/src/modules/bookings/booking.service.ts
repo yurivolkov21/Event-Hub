@@ -83,6 +83,7 @@ export const listMyBookings = async (
 
   const [bookings, total] = await Promise.all([
     BookingModel.find(filter)
+      .populate('eventId', 'title imageUrl startAt venueName')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(query.limit),

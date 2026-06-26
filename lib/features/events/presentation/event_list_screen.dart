@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/networking/api_client.dart';
 import '../../../core/theme/eventhub_theme.dart';
+import '../../bookmarks/data/bookmark_repository.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'event_detail_screen.dart';
@@ -14,6 +15,7 @@ class EventListScreen extends StatefulWidget {
     required this.currentUserId,
     required this.currentUserRole,
     this.eventRepository,
+    this.bookmarkRepository,
     super.key,
   });
 
@@ -21,6 +23,7 @@ class EventListScreen extends StatefulWidget {
   final String currentUserId;
   final String currentUserRole;
   final EventRepository? eventRepository;
+  final BookmarkRepository? bookmarkRepository;
 
   @override
   State<EventListScreen> createState() => _EventListScreenState();
@@ -28,9 +31,11 @@ class EventListScreen extends StatefulWidget {
 
 class _EventListScreenState extends State<EventListScreen> {
   late final EventRepository _eventRepository;
+  late final BookmarkRepository _bookmarkRepository;
   final _searchController = TextEditingController();
 
   List<EventItem> _events = [];
+  Set<String> _bookmarkedEventIds = {};
   String? _errorMessage;
   String? _selectedCategoryId;
   bool _isLoading = true;
@@ -39,7 +44,9 @@ class _EventListScreenState extends State<EventListScreen> {
   void initState() {
     super.initState();
     _eventRepository = widget.eventRepository ?? EventRepository();
+    _bookmarkRepository = widget.bookmarkRepository ?? BookmarkRepository();
     _loadEvents();
+    _loadBookmarks();
   }
 
   @override
@@ -68,6 +75,60 @@ class _EventListScreenState extends State<EventListScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _loadBookmarks() async {
+    try {
+      final bookmarks = await _bookmarkRepository.listMyBookmarks(
+        authToken: widget.authToken,
+      );
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _bookmarkedEventIds = bookmarks.map((bookmark) => bookmark.eventId).toSet();
+      });
+    } catch (_) {
+      // Bookmark indicators are best-effort; ignore load failures.
+    }
+  }
+
+  Future<void> _toggleBookmark(EventItem event) async {
+    final wasBookmarked = _bookmarkedEventIds.contains(event.id);
+
+    setState(() {
+      if (wasBookmarked) {
+        _bookmarkedEventIds.remove(event.id);
+      } else {
+        _bookmarkedEventIds.add(event.id);
+      }
+    });
+
+    try {
+      if (wasBookmarked) {
+        await _bookmarkRepository.deleteBookmark(
+          authToken: widget.authToken,
+          eventId: event.id,
+        );
+      } else {
+        await _bookmarkRepository.createBookmark(
+          authToken: widget.authToken,
+          eventId: event.id,
+        );
+      }
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+      // Roll back the optimistic update if the request failed.
+      setState(() {
+        if (wasBookmarked) {
+          _bookmarkedEventIds.add(event.id);
+        } else {
+          _bookmarkedEventIds.remove(event.id);
+        }
+      });
     }
   }
 
@@ -103,6 +164,10 @@ class _EventListScreenState extends State<EventListScreen> {
     );
 
     if (changed == true) {
+      // Clear any active filter/search so a newly created event is always
+      // visible in the list (otherwise it can look like the create "failed").
+      _searchController.clear();
+      setState(() => _selectedCategoryId = null);
       await _loadEvents();
     }
   }
@@ -167,7 +232,11 @@ class _EventListScreenState extends State<EventListScreen> {
                             width: 292,
                             child: _FeaturedEventCard(
                               event: event,
+                              isBookmarked: _bookmarkedEventIds.contains(
+                                event.id,
+                              ),
                               onTap: () => _openEvent(event),
+                              onToggleBookmark: () => _toggleBookmark(event),
                             ),
                           );
                         },
@@ -412,10 +481,17 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _FeaturedEventCard extends StatelessWidget {
-  const _FeaturedEventCard({required this.event, required this.onTap});
+  const _FeaturedEventCard({
+    required this.event,
+    required this.isBookmarked,
+    required this.onTap,
+    required this.onToggleBookmark,
+  });
 
   final EventItem event;
+  final bool isBookmarked;
   final VoidCallback onTap;
+  final VoidCallback onToggleBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -447,13 +523,17 @@ class _FeaturedEventCard extends StatelessWidget {
                     right: 12,
                     top: 12,
                     child: IconButton.filled(
-                      tooltip: 'Open event',
-                      onPressed: onTap,
+                      tooltip: isBookmarked ? 'Remove bookmark' : 'Bookmark',
+                      onPressed: onToggleBookmark,
                       style: IconButton.styleFrom(
                         backgroundColor: Colors.white.withValues(alpha: 0.9),
-                        foregroundColor: EventHubTheme.coral,
+                        foregroundColor: isBookmarked
+                            ? EventHubTheme.coral
+                            : EventHubTheme.muted,
                       ),
-                      icon: const Icon(Icons.bookmark),
+                      icon: Icon(
+                        isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                      ),
                     ),
                   ),
                 ],

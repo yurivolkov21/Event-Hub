@@ -136,7 +136,7 @@ class _TicketCard extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Event ${booking.eventId}',
+                    booking.eventTitle ?? 'Event ${booking.eventId}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(

@@ -6,6 +6,10 @@ class BookingItem {
     required this.quantity,
     required this.totalPrice,
     required this.status,
+    this.eventTitle,
+    this.eventImageUrl,
+    this.eventStartAt,
+    this.eventVenueName,
     this.createdAt,
     this.updatedAt,
   });
@@ -16,10 +20,16 @@ class BookingItem {
   final int quantity;
   final double totalPrice;
   final String status;
+  final String? eventTitle;
+  final String? eventImageUrl;
+  final DateTime? eventStartAt;
+  final String? eventVenueName;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
   factory BookingItem.fromJson(Map<String, dynamic> json) {
+    final eventJson = json['event'] as Map<String, dynamic>?;
+
     return BookingItem(
       id: json['id'] as String,
       userId: json['userId'] as String,
@@ -27,6 +37,10 @@ class BookingItem {
       quantity: (json['quantity'] as num).toInt(),
       totalPrice: (json['totalPrice'] as num).toDouble(),
       status: json['status'] as String,
+      eventTitle: eventJson?['title'] as String?,
+      eventImageUrl: eventJson?['imageUrl'] as String?,
+      eventStartAt: DateTime.tryParse(eventJson?['startAt'] as String? ?? ''),
+      eventVenueName: eventJson?['venueName'] as String?,
       createdAt: DateTime.tryParse(json['createdAt'] as String? ?? ''),
       updatedAt: DateTime.tryParse(json['updatedAt'] as String? ?? ''),
     );

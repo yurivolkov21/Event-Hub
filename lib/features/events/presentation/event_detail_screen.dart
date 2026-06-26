@@ -724,7 +724,7 @@ class _OrganizerRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'EventHub Organizer',
+                event.organizerName ?? 'EventHub Organizer',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 4),
