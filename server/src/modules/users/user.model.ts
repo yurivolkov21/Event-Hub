@@ -56,6 +56,20 @@ const userSchema = new Schema(
       default: null,
       maxlength: 500,
     },
+    dateOfBirth: {
+      type: Date,
+      default: null,
+    },
+    location: {
+      type: String,
+      default: null,
+      maxlength: 120,
+    },
+    gender: {
+      type: String,
+      enum: ['male', 'female', 'other', null],
+      default: null,
+    },
     interests: {
       type: [String],
       default: [],

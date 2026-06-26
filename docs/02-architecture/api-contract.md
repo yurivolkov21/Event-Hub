@@ -152,7 +152,7 @@ PUT  /api/notifications/:id/read
 **Notification triggers** (each creates a history row and sends an FCM push):
 
 | Type | Recipient | When |
-|------|-----------|------|
+| ------ | ----------- | ------ |
 | `booking` | the booker | a booking is confirmed |
 | `event_created` | the organizer | they publish an event |
 | `event_update` | confirmed attendees | the organizer edits the event |

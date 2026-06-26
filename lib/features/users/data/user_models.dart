@@ -33,6 +33,9 @@ class UserProfile {
     this.avatarUrl,
     this.phone,
     this.bio,
+    this.dateOfBirth,
+    this.location,
+    this.gender,
     this.interests = const [],
   });
 
@@ -43,6 +46,9 @@ class UserProfile {
   final String? avatarUrl;
   final String? phone;
   final String? bio;
+  final DateTime? dateOfBirth;
+  final String? location;
+  final String? gender;
   final List<String> interests;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -54,6 +60,9 @@ class UserProfile {
       avatarUrl: json['avatarUrl'] as String?,
       phone: json['phone'] as String?,
       bio: json['bio'] as String?,
+      dateOfBirth: DateTime.tryParse(json['dateOfBirth'] as String? ?? ''),
+      location: json['location'] as String?,
+      gender: json['gender'] as String?,
       interests:
           (json['interests'] as List<dynamic>?)
               ?.map((value) => value as String)

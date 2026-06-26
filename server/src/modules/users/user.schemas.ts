@@ -12,6 +12,9 @@ export const updateProfileSchema = z
     phone: z.string().trim().max(30).nullable().optional(),
     bio: z.string().trim().max(500).nullable().optional(),
     avatarUrl: z.string().trim().url().nullable().optional(),
+    dateOfBirth: z.coerce.date().nullable().optional(),
+    location: z.string().trim().max(120).nullable().optional(),
+    gender: z.enum(['male', 'female', 'other']).nullable().optional(),
     interests: z.array(z.string().trim().min(1).max(40)).max(20).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

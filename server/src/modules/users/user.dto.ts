@@ -8,6 +8,9 @@ export interface PublicUser {
   avatarUrl: string | null | undefined;
   phone: string | null | undefined;
   bio: string | null | undefined;
+  dateOfBirth: string | null;
+  location: string | null | undefined;
+  gender: string | null | undefined;
   interests: string[];
 }
 
@@ -19,5 +22,9 @@ export const toPublicUser = (user: UserDocument): PublicUser => ({
   avatarUrl: user.avatarUrl,
   phone: user.phone,
   bio: user.bio,
+  dateOfBirth:
+    user.dateOfBirth instanceof Date ? user.dateOfBirth.toISOString() : null,
+  location: user.location,
+  gender: user.gender,
   interests: user.interests,
 });

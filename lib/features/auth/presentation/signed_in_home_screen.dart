@@ -4,6 +4,7 @@ import '../../../core/theme/eventhub_theme.dart';
 import '../../bookings/presentation/my_tickets_screen.dart';
 import '../../events/presentation/event_list_screen.dart';
 import '../../invitations/presentation/my_invitations_screen.dart';
+import '../../notifications/presentation/notification_bell.dart';
 import '../../notifications/presentation/notification_list_screen.dart';
 import '../../users/presentation/profile_screen.dart';
 import '../application/auth_controller.dart';
@@ -27,6 +28,11 @@ class SignedInHomeScreen extends StatelessWidget {
             fullName: user.fullName,
             email: user.email,
             role: user.role,
+            notificationBell: NotificationBell(
+              authToken: session.token,
+              currentUserId: user.id,
+              currentUserRole: user.role,
+            ),
             onLogout: controller.logout,
             onTapProfile: () {
               Navigator.of(context).push(
@@ -110,6 +116,7 @@ class _HomeHeader extends StatelessWidget {
     required this.fullName,
     required this.email,
     required this.role,
+    required this.notificationBell,
     required this.onLogout,
     required this.onTapProfile,
   });
@@ -117,6 +124,7 @@ class _HomeHeader extends StatelessWidget {
   final String fullName;
   final String email;
   final String role;
+  final Widget notificationBell;
   final VoidCallback onLogout;
   final VoidCallback onTapProfile;
 
@@ -148,6 +156,8 @@ class _HomeHeader extends StatelessWidget {
                 icon: const Icon(Icons.menu),
               ),
               const Spacer(),
+              notificationBell,
+              const SizedBox(width: 10),
               IconButton.filled(
                 style: IconButton.styleFrom(
                   backgroundColor: Colors.white.withValues(alpha: 0.18),

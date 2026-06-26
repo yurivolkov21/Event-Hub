@@ -23,8 +23,8 @@ Use this checklist before final submission or class demo.
 
 ## Backend Evidence
 
-- Backend URL: https://eventhub-api-b4yb.onrender.com
-- Health endpoint: https://eventhub-api-b4yb.onrender.com/health
+- Backend URL: <https://eventhub-api-b4yb.onrender.com>
+- Health endpoint: <https://eventhub-api-b4yb.onrender.com/health>
 - MongoDB database name: eventhub (MongoDB Atlas free cluster)
 - Deployment platform: Render (Blueprint web service, free plan, rootDir `server`)
 - API collection: see `docs/02-architecture/api-contract.md`
@@ -62,7 +62,7 @@ Role: user
 - Filter by category/date/location/price
 - Pagination or load more
 - Bookmark events
-- Deploy backend: done (Render + MongoDB Atlas, https://eventhub-api-b4yb.onrender.com)
+- Deploy backend: done (Render + MongoDB Atlas, <https://eventhub-api-b4yb.onrender.com>)
 - Basic test: implemented with `server/tests/app.test.js`
 - CI/CD build APK
 

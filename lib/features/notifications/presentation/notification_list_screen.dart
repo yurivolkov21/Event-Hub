@@ -106,10 +106,61 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
     }
   }
 
+  Future<void> _clearOne(NotificationItem notification) async {
+    try {
+      await _notificationRepository.deleteNotification(
+        authToken: widget.authToken,
+        notificationId: notification.id,
+      );
+      if (!mounted) return;
+      setState(() {
+        _notifications = _notifications
+            .where((item) => item.id != notification.id)
+            .toList();
+      });
+    } on ApiException catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to clear')));
+    }
+  }
+
+  Future<void> _clearAllRead() async {
+    try {
+      await _notificationRepository.clearReadNotifications(
+        authToken: widget.authToken,
+      );
+      await _loadNotifications();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to clear')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final hasReadable = _notifications.any((item) => item.isRead);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          if (hasReadable)
+            TextButton.icon(
+              onPressed: _clearAllRead,
+              icon: const Icon(Icons.clear_all, size: 18),
+              label: const Text('Clear read'),
+            ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _loadNotifications,
         child: ListView(
@@ -144,6 +195,9 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
                   child: _NotificationTile(
                     notification: notification,
                     onTap: () => _handleTap(notification),
+                    onClear: notification.isRead
+                        ? () => _clearOne(notification)
+                        : null,
                   ),
                 ),
               ),
@@ -155,10 +209,15 @@ class _NotificationListScreenState extends State<NotificationListScreen> {
 }
 
 class _NotificationTile extends StatelessWidget {
-  const _NotificationTile({required this.notification, required this.onTap});
+  const _NotificationTile({
+    required this.notification,
+    required this.onTap,
+    this.onClear,
+  });
 
   final NotificationItem notification;
   final VoidCallback onTap;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -177,9 +236,15 @@ class _NotificationTile extends StatelessWidget {
         ),
         title: Text(notification.title),
         subtitle: Text(notification.body),
-        trailing: notification.isRead
-            ? null
-            : const Icon(Icons.mark_email_read_outlined),
+        trailing: onClear != null
+            ? IconButton(
+                tooltip: 'Clear',
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: onClear,
+              )
+            : (notification.isRead
+                  ? null
+                  : const Icon(Icons.mark_email_read_outlined)),
       ),
     );
   }

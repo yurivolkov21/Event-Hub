@@ -21,3 +21,13 @@ notificationRouter.put(
   authMiddleware,
   notificationController.markNotificationAsRead,
 );
+notificationRouter.delete(
+  '/clear-read',
+  authMiddleware,
+  notificationController.clearReadNotifications,
+);
+notificationRouter.delete(
+  '/:id',
+  authMiddleware,
+  notificationController.deleteNotification,
+);

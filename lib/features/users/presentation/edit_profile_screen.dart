@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/networking/api_client.dart';
 import '../../../core/theme/eventhub_theme.dart';
@@ -15,6 +18,8 @@ const _interestOptions = <String>[
   'Games Online',
   'Others',
 ];
+
+const _genderOptions = <String>['male', 'female', 'other'];
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({
@@ -35,10 +40,18 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late final UserRepository _userRepository;
   final _formKey = GlobalKey<FormState>();
+  final _imagePicker = ImagePicker();
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _bioController;
+  late final TextEditingController _locationController;
   late final Set<String> _interests;
+
+  DateTime? _dateOfBirth;
+  String? _gender;
+  Uint8List? _avatarBytes;
+  String? _avatarFileName;
+  String? _avatarMimeType;
 
   bool _isSaving = false;
   String? _errorMessage;
@@ -50,7 +63,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.profile.fullName);
     _phoneController = TextEditingController(text: widget.profile.phone ?? '');
     _bioController = TextEditingController(text: widget.profile.bio ?? '');
+    _locationController = TextEditingController(
+      text: widget.profile.location ?? '',
+    );
     _interests = {...widget.profile.interests};
+    _dateOfBirth = widget.profile.dateOfBirth;
+    _gender = _genderOptions.contains(widget.profile.gender)
+        ? widget.profile.gender
+        : null;
   }
 
   @override
@@ -58,7 +78,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _phoneController.dispose();
     _bioController.dispose();
+    _locationController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final image = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 82,
+    );
+
+    if (image == null) return;
+
+    final bytes = await image.readAsBytes();
+    if (bytes.length > 5 * 1024 * 1024) {
+      setState(() => _errorMessage = 'Image file size must be 5MB or less');
+      return;
+    }
+
+    setState(() {
+      _avatarBytes = bytes;
+      _avatarFileName = image.name;
+      _avatarMimeType = _mimeTypeForImage(image);
+      _errorMessage = null;
+    });
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(now.year - 18),
+      firstDate: DateTime(1920),
+      lastDate: now,
+    );
+
+    if (picked != null) {
+      setState(() => _dateOfBirth = picked);
+    }
   }
 
   Future<void> _save() async {
@@ -72,11 +130,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     });
 
     try {
+      // Upload a newly picked avatar first (separate multipart endpoint).
+      if (_avatarBytes != null) {
+        await _userRepository.uploadAvatar(
+          authToken: widget.authToken,
+          bytes: _avatarBytes!,
+          fileName: _avatarFileName ?? 'avatar.jpg',
+          mimeType: _avatarMimeType ?? 'image/jpeg',
+        );
+      }
+
       final updated = await _userRepository.updateProfile(
         authToken: widget.authToken,
         fullName: _nameController.text.trim(),
         phone: _phoneController.text.trim(),
         bio: _bioController.text.trim(),
+        location: _locationController.text.trim(),
+        dateOfBirth: _dateOfBirth,
+        gender: _gender,
         interests: _interests.toList(),
       );
 
@@ -94,6 +165,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  String _mimeTypeForImage(XFile image) {
+    final mimeType = image.mimeType;
+    if (mimeType != null && mimeType.startsWith('image/')) {
+      return mimeType;
+    }
+
+    final name = image.name.toLowerCase();
+    if (name.endsWith('.png')) return 'image/png';
+    if (name.endsWith('.webp')) return 'image/webp';
+    if (name.endsWith('.gif')) return 'image/gif';
+    return 'image/jpeg';
+  }
+
+  String _formatDate(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}/${local.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +194,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           child: ListView(
             padding: const EdgeInsets.all(20),
             children: [
+              Center(child: _AvatarPicker(
+                avatarBytes: _avatarBytes,
+                avatarUrl: widget.profile.avatarUrl,
+                fullName: widget.profile.fullName,
+                onPick: _pickAvatar,
+              )),
+              const SizedBox(height: 24),
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(
@@ -125,6 +222,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   labelText: 'Phone',
                   prefixIcon: Icon(Icons.phone_outlined),
                 ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Location',
+                  prefixIcon: Icon(Icons.location_on_outlined),
+                ),
+              ),
+              const SizedBox(height: 16),
+              InkWell(
+                onTap: _pickDateOfBirth,
+                borderRadius: BorderRadius.circular(16),
+                child: InputDecorator(
+                  decoration: const InputDecoration(
+                    labelText: 'Date of birth',
+                    prefixIcon: Icon(Icons.cake_outlined),
+                  ),
+                  child: Text(
+                    _dateOfBirth != null
+                        ? _formatDate(_dateOfBirth!)
+                        : 'Select date',
+                    style: TextStyle(
+                      color: _dateOfBirth != null
+                          ? EventHubTheme.ink
+                          : EventHubTheme.muted,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                initialValue: _gender,
+                decoration: const InputDecoration(
+                  labelText: 'Gender',
+                  prefixIcon: Icon(Icons.wc_outlined),
+                ),
+                items: _genderOptions
+                    .map(
+                      (value) => DropdownMenuItem(
+                        value: value,
+                        child: Text(value[0].toUpperCase() + value.substring(1)),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) => setState(() => _gender = value),
               ),
               const SizedBox(height: 16),
               TextFormField(
@@ -196,5 +339,79 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
       ),
     );
+  }
+}
+
+class _AvatarPicker extends StatelessWidget {
+  const _AvatarPicker({
+    required this.avatarBytes,
+    required this.avatarUrl,
+    required this.fullName,
+    required this.onPick,
+  });
+
+  final Uint8List? avatarBytes;
+  final String? avatarUrl;
+  final String fullName;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    ImageProvider? image;
+    if (avatarBytes != null) {
+      image = MemoryImage(avatarBytes!);
+    } else if (avatarUrl != null && avatarUrl!.isNotEmpty) {
+      image = NetworkImage(avatarUrl!);
+    }
+
+    return Stack(
+      children: [
+        CircleAvatar(
+          radius: 52,
+          backgroundColor: EventHubTheme.primary.withValues(alpha: 0.14),
+          foregroundColor: EventHubTheme.primary,
+          backgroundImage: image,
+          child: image == null
+              ? Text(
+                  _initials(fullName),
+                  style: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w900,
+                  ),
+                )
+              : null,
+        ),
+        Positioned(
+          right: 0,
+          bottom: 0,
+          child: Material(
+            color: EventHubTheme.primary,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onPick,
+              child: const Padding(
+                padding: EdgeInsets.all(8),
+                child: Icon(Icons.camera_alt, color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _initials(String value) {
+    final words = value
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((word) => word.isNotEmpty)
+        .toList();
+    if (words.isEmpty) return '?';
+    return words
+        .take(2)
+        .map((word) => word.characters.first)
+        .join()
+        .toUpperCase();
   }
 }

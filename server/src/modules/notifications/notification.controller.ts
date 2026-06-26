@@ -63,3 +63,34 @@ export const markNotificationAsRead: RequestHandler = async (
     next(error);
   }
 };
+
+export const clearReadNotifications: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new AppError('Authentication token is required', 401);
+    }
+
+    const result = await notificationService.clearReadNotifications(
+      req.user.id,
+    );
+
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteNotification: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new AppError('Authentication token is required', 401);
+    }
+
+    const { id } = notificationIdParamSchema.parse(req.params);
+    await notificationService.deleteNotification(id, req.user.id);
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+};

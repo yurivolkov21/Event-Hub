@@ -5,7 +5,7 @@ EventHub Android app, how to obtain the required keys, and how the pieces connec
 
 ## How the flow works
 
-```
+```text
 [Android app]
   google_sign_in v7  ->  user picks a Google account  ->  Google ID token
         |
@@ -56,7 +56,7 @@ registered in Firebase.
 
 Debug keystore fingerprints for this machine (use these for emulator/debug demo):
 
-```
+```text
 SHA-1:   FB:9A:70:ED:FE:CF:6B:D4:38:34:03:5D:E2:30:8B:33:BC:6C:7F:22
 SHA-256: 47:BD:69:40:C8:7D:F1:9C:3A:45:08:A1:7C:CA:C4:2C:FA:9C:3E:CF:8B:7D:D9:79:5A:E3:17:C9:A7:C6:3C:4F
 ```
@@ -90,7 +90,7 @@ Find it in **either** place:
 - **google-services.json**: open the file, look in `oauth_client` for the entry with
   `"client_type": 3`. Its `client_id` (ends with `.apps.googleusercontent.com`) is the
   Web client ID.
-- **Google Cloud Console**: https://console.cloud.google.com -> select the project ->
+- **Google Cloud Console**: <https://console.cloud.google.com> -> select the project ->
   **APIs & Services** -> **Credentials** -> under **OAuth 2.0 Client IDs**, copy
   **"Web client (auto created by Google Service)"**.
 

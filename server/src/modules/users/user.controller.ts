@@ -49,3 +49,21 @@ export const updateMyProfile: RequestHandler = async (req, res, next) => {
     next(error);
   }
 };
+
+export const updateMyAvatar: RequestHandler = async (req, res, next) => {
+  try {
+    if (!req.user) {
+      throw new AppError('Authentication token is required', 401);
+    }
+
+    if (!req.file) {
+      throw new AppError('An image file is required', 400);
+    }
+
+    const user = await userService.updateAvatar(req.user.id, req.file);
+
+    res.json({ user });
+  } catch (error) {
+    next(error);
+  }
+};

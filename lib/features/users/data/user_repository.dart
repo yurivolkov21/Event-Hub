@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../core/networking/api_client.dart';
 import 'user_models.dart';
 
@@ -40,6 +42,9 @@ class UserRepository {
     String? fullName,
     String? phone,
     String? bio,
+    DateTime? dateOfBirth,
+    String? location,
+    String? gender,
     List<String>? interests,
   }) async {
     final body = <String, dynamic>{};
@@ -53,6 +58,15 @@ class UserRepository {
     if (bio != null) {
       body['bio'] = bio;
     }
+    if (dateOfBirth != null) {
+      body['dateOfBirth'] = dateOfBirth.toUtc().toIso8601String();
+    }
+    if (location != null) {
+      body['location'] = location;
+    }
+    if (gender != null) {
+      body['gender'] = gender;
+    }
     if (interests != null) {
       body['interests'] = interests;
     }
@@ -61,6 +75,27 @@ class UserRepository {
       '/users/me',
       authToken: authToken,
       body: body,
+    );
+
+    return UserProfile.fromJson(response['user'] as Map<String, dynamic>);
+  }
+
+  Future<UserProfile> uploadAvatar({
+    required String authToken,
+    required Uint8List bytes,
+    required String fileName,
+    required String mimeType,
+  }) async {
+    final response = await _apiClient.postMultipart(
+      '/users/me/avatar',
+      authToken: authToken,
+      fields: const {},
+      file: ApiMultipartFile(
+        fieldName: 'image',
+        fileName: fileName,
+        bytes: bytes,
+        mimeType: mimeType,
+      ),
     );
 
     return UserProfile.fromJson(response['user'] as Map<String, dynamic>);
