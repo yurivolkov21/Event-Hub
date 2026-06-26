@@ -32,6 +32,10 @@ export const createBooking = async (
     throw new AppError('Event not found', 404);
   }
 
+  if (event.organizerId.toString() === userId) {
+    throw new AppError('Organizers cannot book their own event', 403);
+  }
+
   if (event.status !== 'published') {
     throw new AppError('Only published events can be booked', 400);
   }

@@ -1,6 +1,8 @@
 import { Types } from 'mongoose';
 
 import { AppError } from '../../middlewares/error.middleware';
+import { BookingModel } from '../bookings/booking.model';
+import * as bookingService from '../bookings/booking.service';
 import { EventModel, type EventDocument } from '../events/event.model';
 import * as notificationService from '../notifications/notification.service';
 import { UserModel } from '../users/user.model';
@@ -138,35 +140,15 @@ export const listMyInvitations = async (
   };
 };
 
-const updateInvitationStatus = async (
-  invitationId: string,
-  userId: string,
+// Close the loop: tell the inviter how the recipient responded.
+const notifyInviter = async (
+  invitation: InvitationDocument,
+  responderId: string,
   status: 'accepted' | 'rejected',
-): Promise<PublicInvitation> => {
-  const invitation = (await InvitationModel.findOneAndUpdate(
-    {
-      _id: invitationId,
-      toUserId: new Types.ObjectId(userId),
-      status: 'pending',
-    },
-    {
-      $set: {
-        status,
-      },
-    },
-    {
-      returnDocument: 'after',
-    },
-  )) as InvitationDocument | null;
-
-  if (!invitation) {
-    throw new AppError('Pending invitation not found', 404);
-  }
-
-  // Close the loop: tell the inviter how the recipient responded.
+): Promise<void> => {
   const [event, responder] = await Promise.all([
     EventModel.findById(invitation.eventId).select('title'),
-    UserModel.findById(userId).select('fullName'),
+    UserModel.findById(responderId).select('fullName'),
   ]);
 
   const responderName = responder?.get('fullName') ?? 'Someone';
@@ -186,20 +168,64 @@ const updateInvitationStatus = async (
       },
     })
     .catch(() => undefined);
+};
 
-  return toPublicInvitation(invitation);
+const findPendingInvitation = async (
+  invitationId: string,
+  userId: string,
+): Promise<InvitationDocument> => {
+  const invitation = (await InvitationModel.findOne({
+    _id: invitationId,
+    toUserId: new Types.ObjectId(userId),
+    status: 'pending',
+  })) as InvitationDocument | null;
+
+  if (!invitation) {
+    throw new AppError('Pending invitation not found', 404);
+  }
+
+  return invitation;
 };
 
 export const acceptInvitation = async (
   invitationId: string,
   userId: string,
 ): Promise<PublicInvitation> => {
-  return updateInvitationStatus(invitationId, userId, 'accepted');
+  const invitation = await findPendingInvitation(invitationId, userId);
+
+  // Model B: accepting an invitation reserves a seat (a confirmed booking),
+  // so the user does not have to book again. Skip if they already booked.
+  const alreadyBooked = await BookingModel.exists({
+    eventId: invitation.eventId,
+    userId: new Types.ObjectId(userId),
+    status: 'confirmed',
+  });
+
+  if (!alreadyBooked) {
+    // Throws (e.g. 400 "Not enough tickets available") if the event is full;
+    // the invitation stays pending so the user can retry/decline.
+    await bookingService.createBooking(userId, {
+      eventId: invitation.eventId.toString(),
+      quantity: 1,
+    });
+  }
+
+  invitation.status = 'accepted';
+  await invitation.save();
+  await notifyInviter(invitation, userId, 'accepted');
+
+  return toPublicInvitation(invitation);
 };
 
 export const rejectInvitation = async (
   invitationId: string,
   userId: string,
 ): Promise<PublicInvitation> => {
-  return updateInvitationStatus(invitationId, userId, 'rejected');
+  const invitation = await findPendingInvitation(invitationId, userId);
+
+  invitation.status = 'rejected';
+  await invitation.save();
+  await notifyInviter(invitation, userId, 'rejected');
+
+  return toPublicInvitation(invitation);
 };
