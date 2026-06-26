@@ -6,6 +6,7 @@ import '../../bookmarks/data/bookmark_repository.dart';
 import '../data/event_models.dart';
 import '../data/event_repository.dart';
 import 'event_detail_screen.dart';
+import 'event_filter_sheet.dart';
 import 'event_form_screen.dart';
 import 'event_image.dart';
 
@@ -38,6 +39,7 @@ class _EventListScreenState extends State<EventListScreen> {
   Set<String> _bookmarkedEventIds = {};
   String? _errorMessage;
   String? _selectedCategoryId;
+  EventFilter _filter = EventFilter.empty;
   bool _isLoading = true;
 
   @override
@@ -65,6 +67,9 @@ class _EventListScreenState extends State<EventListScreen> {
       final response = await _eventRepository.listEvents(
         search: _searchController.text,
         categoryId: _selectedCategoryId,
+        minPrice: _filter.minPrice,
+        maxPrice: _filter.maxPrice,
+        date: _filter.date,
       );
       setState(() => _events = response.data);
     } on ApiException catch (error) {
@@ -132,6 +137,17 @@ class _EventListScreenState extends State<EventListScreen> {
     }
   }
 
+  Future<void> _openFilters() async {
+    final result = await showEventFilterSheet(context, _filter);
+
+    if (result == null) {
+      return;
+    }
+
+    setState(() => _filter = result);
+    _loadEvents();
+  }
+
   void _selectCategory(String? categoryId) {
     setState(() => _selectedCategoryId = categoryId);
     _loadEvents();
@@ -167,7 +183,10 @@ class _EventListScreenState extends State<EventListScreen> {
       // Clear any active filter/search so a newly created event is always
       // visible in the list (otherwise it can look like the create "failed").
       _searchController.clear();
-      setState(() => _selectedCategoryId = null);
+      setState(() {
+        _selectedCategoryId = null;
+        _filter = EventFilter.empty;
+      });
       await _loadEvents();
     }
   }
@@ -194,7 +213,9 @@ class _EventListScreenState extends State<EventListScreen> {
             _ExploreHeader(
               searchController: _searchController,
               selectedCategoryId: _selectedCategoryId,
+              isFilterActive: _filter.isActive,
               onSearch: _loadEvents,
+              onOpenFilters: _openFilters,
               onCategorySelected: _selectCategory,
             ),
             Padding(
@@ -275,13 +296,17 @@ class _ExploreHeader extends StatelessWidget {
   const _ExploreHeader({
     required this.searchController,
     required this.selectedCategoryId,
+    required this.isFilterActive,
     required this.onSearch,
+    required this.onOpenFilters,
     required this.onCategorySelected,
   });
 
   final TextEditingController searchController;
   final String? selectedCategoryId;
+  final bool isFilterActive;
   final VoidCallback onSearch;
+  final VoidCallback onOpenFilters;
   final ValueChanged<String?> onCategorySelected;
 
   @override
@@ -372,12 +397,16 @@ class _ExploreHeader extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               FilledButton.icon(
-                onPressed: onSearch,
+                onPressed: onOpenFilters,
                 icon: const Icon(Icons.tune, size: 18),
-                label: const Text('Filters'),
+                label: Text(isFilterActive ? 'Filters •' : 'Filters'),
                 style: FilledButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.16),
-                  foregroundColor: Colors.white,
+                  backgroundColor: isFilterActive
+                      ? Colors.white
+                      : Colors.white.withValues(alpha: 0.16),
+                  foregroundColor: isFilterActive
+                      ? EventHubTheme.primary
+                      : Colors.white,
                   minimumSize: const Size(0, 48),
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                 ),
